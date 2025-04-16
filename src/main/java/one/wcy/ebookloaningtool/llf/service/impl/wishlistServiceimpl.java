@@ -1,7 +1,9 @@
 package one.wcy.ebookloaningtool.llf.service.impl;
 
 import one.wcy.ebookloaningtool.llf.mapper.WishlistsMapper;
+import one.wcy.ebookloaningtool.llf.pojo.Books;
 import one.wcy.ebookloaningtool.llf.response.getWishlistResponse;
+import one.wcy.ebookloaningtool.llf.service.BorrowService;
 import one.wcy.ebookloaningtool.llf.service.WishlistService;
 import one.wcy.ebookloaningtool.utils.Response;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,8 @@ public class wishlistServiceimpl implements WishlistService {
 
     @Autowired
     private WishlistsMapper wishlistMapper;
+    @Autowired
+    private BorrowService borrowService;
     @Override
     public Response addBook(String bookId, String userID) {
         if (wishlistMapper.findListByUidAndBookId(userID, bookId) != null) {
@@ -31,14 +35,16 @@ public class wishlistServiceimpl implements WishlistService {
     }
 
     @Override
-    public Response deleteBook(String bookId, String userID) {
-        if (wishlistMapper.findListByUidAndBookId(userID, bookId) == null) {
-            return new Response("Book does not exist in wishlist.");
+    public Response deleteBook(List<String> bookIds, String userID) {
+        for (String bookId: bookIds){
+            Books b = borrowService.findBookById(bookId);
+            //没有该书
+            if(b == null) return new Response("Some books not exist.");
+            if (wishlistMapper.findListByUidAndBookId(userID, bookId) == null)
+                return new Response("Some books does not exist in cart.");
         }
-        else{
-            wishlistMapper.deleteWishlists(userID,bookId);
-            return new Response("success");
-        }
+        for (String bookId: bookIds) wishlistMapper.deleteWishlists(userID,bookId);
+        return new Response("success");
     }
 
     @Override

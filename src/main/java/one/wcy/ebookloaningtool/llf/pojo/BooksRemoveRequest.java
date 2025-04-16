@@ -7,6 +7,6 @@ import java.util.List;
 
 @Getter
 @Setter
-public class CartRemoveRequest {
+public class BooksRemoveRequest {
     private List<String> bookId;
 }
