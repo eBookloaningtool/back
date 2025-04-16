@@ -5,8 +5,8 @@ package one.wcy.ebookloaningtool.llf.controller;
 import io.jsonwebtoken.Claims;
 import one.wcy.ebookloaningtool.llf.pojo.Books;
 import one.wcy.ebookloaningtool.llf.service.BorrowService;
-import one.wcy.ebookloaningtool.security.JwtTokenService;
 import one.wcy.ebookloaningtool.utils.Response;
+import one.wcy.ebookloaningtool.utils.ThreadLocalUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,13 +16,10 @@ public class BorrowController {
 
     @Autowired
     private BorrowService borrowService;
-    @Autowired
-    private JwtTokenService jwtTokenService;
-
     @PostMapping("/borrow")
-    public Response borrow(@RequestHeader(name = "Authorization") String token, @RequestBody Books book) {
+    public Response borrow(@RequestBody Books book) {
         //从令牌中获取用户uuid
-        Claims claims = jwtTokenService.extractAllClaims(token);
+        Claims claims = ThreadLocalUtil.get();
         String userID = claims.get("uuid").toString();
         Books b = borrowService.findBookById(book.getBookId());
         if (b == null) {
@@ -40,9 +37,9 @@ public class BorrowController {
     }
 
     @PostMapping("/return")
-    public Response returnBook(@RequestHeader(name = "Authorization") String token, @RequestBody Books book) {
+    public Response returnBook(@RequestBody Books book) {
         //从令牌中获取用户uuid
-        Claims claims = jwtTokenService.extractAllClaims(token);
+        Claims claims = ThreadLocalUtil.get();
         String userID = claims.get("uuid").toString();
         Books b = borrowService.findBookById(book.getBookId());
         if (b == null) {
@@ -52,9 +49,9 @@ public class BorrowController {
     }
 
     @PostMapping("/renew")
-    public Response renewBook(@RequestHeader(name = "Authorization") String token, @RequestBody Books book) {
+    public Response renewBook(@RequestBody Books book) {
         //从令牌中获取用户uuid
-        Claims claims = jwtTokenService.extractAllClaims(token);
+        Claims claims = ThreadLocalUtil.get();
         String userID = claims.get("uuid").toString();
         Books b = borrowService.findBookById(book.getBookId());
         if (b == null) {
