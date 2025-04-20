@@ -111,14 +111,25 @@ public class BorrowServiceimpl implements BorrowService {
                 String userUUID = borrowRecords.getUserUUID();
                 String emailAddress = userRepository.findByUuid(userUUID).getEmail();//根据UUID获取email地址
                 String bookName = bookMapper.findBookById(borrowRecords.getBookUUID()).getTitle() ;//根据bookId获取书名
-
-                //测试获取
-                System.out.println(emailAddress);
-                System.out.println(bookName);
-                System.out.println("Your book:"+ bookName + " will overdue in "+ i + "days.");
-
                 //发送邮件
                 emailService.sendTextEmail(emailAddress, "Book overdue reminder", "Your book:"+ bookName + " will overdue in "+ i + "days.");
+            }
+        }
+    }
+
+    @Override
+    public void autoReturn() {
+        LocalDate dueDate = LocalDate.now();
+        List<BorrowRecords> brl = borrowRecordsRepository.findByStatus("borrowed");
+        for (BorrowRecords borrowRecords : brl) {
+            if (borrowRecords.getDueDate().toLocalDate().equals(dueDate)) {
+                //更改借阅状态
+                borrowRecords.setStatus("returned");
+                //设置归还时间为当前时间
+                borrowRecords.setReturnDate(LocalDateTime.now());
+                borrowRecordsRepository.save(borrowRecords);
+                //库存+1
+                bookMapper.updateStock(borrowRecords.getBookUUID(), 1);
             }
         }
     }
@@ -126,4 +137,6 @@ public class BorrowServiceimpl implements BorrowService {
     private List<BorrowRecords> checkBorrow(String bookUUID, String userUUID) {
         return borrowRecordsRepository.findByBookUUIDAndUserUUIDAndStatus(bookUUID,userUUID,"borrowed");
     }
+
+
 }
