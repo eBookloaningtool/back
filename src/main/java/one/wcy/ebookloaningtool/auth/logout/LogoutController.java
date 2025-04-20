@@ -4,10 +4,8 @@ import one.wcy.ebookloaningtool.security.JwtTokenService;
 import one.wcy.ebookloaningtool.utils.Response;
 import one.wcy.ebookloaningtool.utils.ThreadLocalUtil;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
 
 @RestController
 public class LogoutController {
