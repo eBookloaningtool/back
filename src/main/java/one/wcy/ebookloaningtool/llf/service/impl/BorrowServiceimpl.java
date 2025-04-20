@@ -7,10 +7,13 @@ import one.wcy.ebookloaningtool.llf.response.BorrowResponse;
 import one.wcy.ebookloaningtool.llf.response.RenewResponse;
 import one.wcy.ebookloaningtool.llf.service.BorrowRecordsRepository;
 import one.wcy.ebookloaningtool.llf.service.BorrowService;
+import one.wcy.ebookloaningtool.notification.EmailService;
+import one.wcy.ebookloaningtool.users.UserRepository;
 import one.wcy.ebookloaningtool.utils.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,11 +22,17 @@ public class BorrowServiceimpl implements BorrowService {
 
     @Autowired
     private final BorrowRecordsRepository borrowRecordsRepository;
+
+    @Autowired
+    private final UserRepository userRepository;
     @Autowired
     private BookMapper bookMapper;
+    @Autowired
+    private EmailService emailService;
 
-    public BorrowServiceimpl(BorrowRecordsRepository borrowRecordsRepository) {
+    public BorrowServiceimpl(BorrowRecordsRepository borrowRecordsRepository, UserRepository userRepository) {
         this.borrowRecordsRepository = borrowRecordsRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -89,6 +98,29 @@ public class BorrowServiceimpl implements BorrowService {
             borrowRecordsRepository.save(borrowedRecord);
             return new RenewResponse("Renew Successful",newDueTime);
         }else return new Response("The user do not borrow this book.");
+    }
+
+    @Override
+    public void overdueReiminder(int i) {
+        List<BorrowRecords> brl = borrowRecordsRepository.findByStatus("borrowed");
+        LocalDate ReminderDate = LocalDate.now().plusDays(i);//根据传入i，计算需要提醒的书籍的逾期日期
+
+        for (BorrowRecords borrowRecords : brl) {
+            LocalDate dueDate = borrowRecords.getDueDate().toLocalDate();//获取逾期日期
+            if (ReminderDate.equals(dueDate)) {
+                String userUUID = borrowRecords.getUserUUID();
+                String emailAddress = userRepository.findByUuid(userUUID).getEmail();//根据UUID获取email地址
+                String bookName = bookMapper.findBookById(borrowRecords.getBookUUID()).getTitle() ;//根据bookId获取书名
+
+                //测试获取
+                System.out.println(emailAddress);
+                System.out.println(bookName);
+                System.out.println("Your book:"+ bookName + " will overdue in "+ i + "days.");
+
+                //发送邮件
+                emailService.sendTextEmail(emailAddress, "Book overdue reminder", "Your book:"+ bookName + " will overdue in "+ i + "days.");
+            }
+        }
     }
 
     private List<BorrowRecords> checkBorrow(String bookUUID, String userUUID) {

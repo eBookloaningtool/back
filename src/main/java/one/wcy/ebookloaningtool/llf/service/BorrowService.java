@@ -16,4 +16,6 @@ public interface BorrowService {
 
     //续借书籍
     Response renewBook(String bookUUID, String userUUID);
+
+    void overdueReiminder(int i);
 }
