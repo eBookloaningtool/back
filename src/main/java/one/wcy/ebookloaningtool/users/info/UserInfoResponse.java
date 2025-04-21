@@ -21,7 +21,7 @@ public class UserInfoResponse {
     private List<String> shoppingcart;
     private List<String> transactionHistory;
 
-    public UserInfoResponse(String UUID, String name, String email, int balance, 
+    public UserInfoResponse(String UUID, String name, String email, double balance, 
                             LocalDate createdat, List<String> borrowedBooks, 
                             List<String> historicalBooks, List<String> wishlist, 
                             List<String> star, List<String> shoppingcart, 
