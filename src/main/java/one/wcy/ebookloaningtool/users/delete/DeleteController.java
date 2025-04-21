@@ -3,10 +3,10 @@ package one.wcy.ebookloaningtool.users.delete;
 import io.jsonwebtoken.Claims;
 import one.wcy.ebookloaningtool.security.JwtTokenService;
 import one.wcy.ebookloaningtool.users.UserService;
+import one.wcy.ebookloaningtool.utils.ThreadLocalUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,17 +25,9 @@ public class DeleteController {
     }
 
     @PostMapping("/delete")
-    public ResponseEntity<DeleteUserResponse> deleteUser(
-            @RequestHeader("Authorization") String authHeader) {
-
-        // 提取并验证JWT令牌
-        String token = authHeader.replace("Bearer ", "");
-        if (!jwtTokenService.validateToken(token)) {
-            throw new RuntimeException("Invalid or expired token");
-        }
-
-        // 从令牌中获取用户UUID
-        Claims claims = jwtTokenService.extractAllClaims(token);
+    public ResponseEntity<DeleteUserResponse> deleteUser() {
+        // 从ThreadLocal获取claims
+        Claims claims = ThreadLocalUtil.get();
         String uuid = claims.get("uuid", String.class);
 
         // 删除用户
