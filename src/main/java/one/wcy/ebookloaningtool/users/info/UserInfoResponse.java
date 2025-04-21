@@ -12,7 +12,7 @@ public class UserInfoResponse {
     private String UUID;
     private String name;
     private String email;
-    private int balance;
+    private double balance;
     private LocalDate createdat;
     private List<String> borrowedBooks;
     private List<String> historicalBooks;
