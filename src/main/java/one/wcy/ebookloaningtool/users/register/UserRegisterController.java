@@ -12,6 +12,7 @@ public class UserRegisterController {
 
     private final UserRepository userRepository;
     private final PasswordEncoderService passwordEncoderService;
+    private static final double INITIAL_BALANCE = 0.0; // 初始余额设置为0
 
     public UserRegisterController(UserRepository userRepository, PasswordEncoderService passwordEncoderService) {
         this.userRepository = userRepository;
@@ -25,7 +26,13 @@ public class UserRegisterController {
             String rawPassword = user.getPassword();
             // Use Hash value of the password
             String encodedPassword = passwordEncoderService.encodePassword(rawPassword);
-            user.setPassword(encodedPassword);
+            user.setEncodedPassword(encodedPassword);
+            
+            // 设置初始余额
+            user.setBalance(INITIAL_BALANCE);
+            
+            // 创建日期将由@PrePersist自动设置
+            
             // Save data
             User savedUser = userRepository.save(user);
             // Return value
@@ -33,7 +40,8 @@ public class UserRegisterController {
                     "success",
                     savedUser.getUuid(),
                     savedUser.getEmail(),
-                    savedUser.getName()
+                    savedUser.getName(),
+                    savedUser.getCreatedat()
             );
         } else {
             return new Response(
