@@ -18,7 +18,7 @@ public interface BorrowService {
     Response renewBook(String bookUUID, String userUUID);
 
     //逾期提醒
-    void overdueReiminder(int i);
+    void overdueReminder(int i);
     //逾期自动归还
-    public void autoReturn();
+    void autoReturn();
 }
