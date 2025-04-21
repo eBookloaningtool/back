@@ -1,6 +1,7 @@
 package one.wcy.ebookloaningtool.users.update;
 
 import one.wcy.ebookloaningtool.security.JwtTokenService;
+import one.wcy.ebookloaningtool.users.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
