@@ -54,8 +54,7 @@ public class ReviewServiceImpl implements ReviewService {
 //            return new Response("You haven't borrowed this book");
 //        }
 
-        if ((commentsMapper.countActiveBorrow(book.getBookId(), userId))>0) {
-            return new Response("You haven't borrowed this book");
+        if ((commentsMapper.countActiveBorrow(book.getBookId(), userId)) == 0) {
         }
 
 
