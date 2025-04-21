@@ -51,9 +51,19 @@ public class JwtTokenService {
         return token;
     }
 
-    public void invalidateToken(String token) {    //使令牌失效
+//    public void invalidateToken(String token) {    //使令牌失效
+//        try {
+//            Claims claims = extractClaims(token);
+//            String tokenId = claims.get("jti", String.class);
+//            if (tokenId != null) {
+//                activeTokens.remove(tokenId);
+//            }
+//        } catch (Exception e) {
+//            // Failed token
+//        }
+//    }
+    public void invalidateToken(Claims claims) {    //使令牌失效
         try {
-            Claims claims = extractClaims(token);
             String tokenId = claims.get("jti", String.class);
             if (tokenId != null) {
                 activeTokens.remove(tokenId);
