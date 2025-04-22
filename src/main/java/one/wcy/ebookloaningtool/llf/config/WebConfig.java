@@ -15,6 +15,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         //登录接口和注册接口不拦截,电子书管理不拦截
-        registry.addInterceptor(logininterceptor).excludePathPatterns("/api/users/register", "/api/auth/login","/api/books/**");
+        //评论系统中获取书籍评论、获取评论信息不拦截
+        registry.addInterceptor(logininterceptor).excludePathPatterns("/api/users/register", "/api/auth/login","/api/books/**", "/api/reviews/book", "/api/reviews/content");
     }
 }

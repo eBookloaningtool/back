@@ -23,14 +23,4 @@ public class PaymentRecord {
     @Column(name = "paymentDate", nullable = false)
     private LocalDateTime paymentDate;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private PaymentStatus status;
-
-    @Column(name = "method")
-    private String method;
-
-    public enum PaymentStatus {
-        PENDING, COMPLETED, FAILED
-    }
 }

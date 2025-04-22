@@ -10,5 +10,5 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DeleteReviewRequest {
-    private List<String> commentId;
+    private String commentId;
 }

@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -31,7 +32,7 @@ public class Comment {
     @Column(name = "updateAt")
     private LocalDateTime updatedAt;
 
-    @Column(name = "deleted", columnDefinition = "TINYINT DEFAULT 0")
-    private Integer deleted; // 0=正常，1=已删除
+    @Column(name = "rating", nullable = false)
+    private BigDecimal rating;
 
 }

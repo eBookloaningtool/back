@@ -1,6 +1,7 @@
 package one.wcy.ebookloaningtool.xdz.service;
 
 import io.jsonwebtoken.Claims;
+import one.wcy.ebookloaningtool.llf.mapper.BookMapper;
 import one.wcy.ebookloaningtool.llf.pojo.Books;
 import one.wcy.ebookloaningtool.llf.service.BorrowService;
 import one.wcy.ebookloaningtool.utils.Response;
@@ -10,14 +11,14 @@ import one.wcy.ebookloaningtool.xdz.pojo.AddReviewRequest;
 import one.wcy.ebookloaningtool.xdz.pojo.Comment;
 import one.wcy.ebookloaningtool.xdz.pojo.DeleteReviewRequest;
 import one.wcy.ebookloaningtool.xdz.response.AddReviewResponse;
-import one.wcy.ebookloaningtool.xdz.response.CommentResponse;
+import one.wcy.ebookloaningtool.xdz.response.CommentContentResponse;
 import one.wcy.ebookloaningtool.xdz.response.GetReviewsResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class ReviewServiceImpl implements ReviewService {
@@ -28,11 +29,19 @@ public class ReviewServiceImpl implements ReviewService {
     @Autowired
     private BorrowService borrowService;
 
+    @Autowired
+    private BookMapper bookMapper;
+
     @Override
     public Response addReview(AddReviewRequest request) {
         // 1. 参数校验
-        if (request.getBookId() == null || request.getRating() < 1 || request.getRating() > 5) {
-            return new Response("Invalid parameters");
+        if (request.getBookId() == null || request.getComment() == null || request.getRating() == null) {
+            return new Response("Invalid parameters. Could not be null.");
+        }
+
+        if (request.getRating().compareTo(new BigDecimal("1")) < 0
+                || request.getRating().compareTo(new BigDecimal("5")) > 0) {
+            return new Response("Invalid rating. Rating should be between 1 and 5.");
         }
 
         // 2. 检查用户是否已登录
@@ -50,13 +59,9 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         // 4. 检查用户是否已借阅该书
-//        if (borrowService.checkBorrow(book.getBookId(), userId).isEmpty()) {
-//            return new Response("You haven't borrowed this book");
-//        }
-
         if ((commentsMapper.countActiveBorrow(book.getBookId(), userId)) == 0) {
+            return new Response("You haven't borrowed this book yet.");
         }
-
 
 
         // 5. 保存评论到数据库
@@ -65,7 +70,11 @@ public class ReviewServiceImpl implements ReviewService {
         comment.setUserUUID(userId);
         comment.setBookUUID(request.getBookId());
         comment.setContent(request.getComment());
+        comment.setRating(request.getRating());
         commentsMapper.insert(comment);
+
+        BigDecimal avgRating = commentsMapper.getAverageRating(request.getBookId());
+        commentsMapper.updateRating(request.getBookId(), avgRating);
 
         String generatedCommentId = comment.getCommentId();
 
@@ -81,9 +90,6 @@ public class ReviewServiceImpl implements ReviewService {
         String userId = claims.get("uuid").toString();
 
         List<String> commentIds = commentsMapper.findByUserId(userId);
-//        List<String> commentIds = comments.stream()
-//                .map(Comment::getCommentId)
-//                .collect(Collectors.toList());
 
         return new GetReviewsResponse("commentId", commentIds);
     }
@@ -94,17 +100,33 @@ public class ReviewServiceImpl implements ReviewService {
             return new Response("Book ID is required");
         }
 
-        List<CommentResponse> comments = commentsMapper.findByBookId(bookId);
-        List<CommentResponse> responseList = comments.stream()
-                .map(comment -> new CommentResponse(
-                        comment.getCommentId(),
-                        comment.getContent()))
-                .collect(Collectors.toList());
-        List<String> commentIds=responseList.stream()
-                .map(CommentResponse::getCommentId)
-                .collect(Collectors.toList());
+        if (bookMapper.findBookById(bookId) == null) {
+            return new Response("Invalid book.");
+        }
+
+        List<String> commentIds = commentsMapper.findByBookId(bookId);
+
+        if (commentIds.isEmpty()) {
+            return new Response("No related comments.");
+        }
 
         return new GetReviewsResponse("success", commentIds);
+    }
+
+    @Override
+    public Response getCommentContent(String commentId) {
+        // 参数校验
+        if (commentId == null || commentId.isEmpty()) {
+            return new Response("Invalid commentId.");
+        }
+
+        Comment comment = commentsMapper.selectById(commentId);
+        if (comment == null) {
+            return new Response("Comment not found");
+        }
+
+        return new CommentContentResponse("success", comment.getUserUUID(),
+                comment.getRating(), comment.getContent());
     }
 
     @Override
@@ -115,16 +137,19 @@ public class ReviewServiceImpl implements ReviewService {
         }
         String userId = claims.get("uuid").toString();
 
-        for (String commentId : request.getCommentId()) {
-            Comment comment = commentsMapper.selectById(commentId);
-            if (comment == null) {
-                return new Response("Comment not found: " + commentId);
-            }
-            if (!comment.getUserUUID().equals(userId)) {
-                return new Response("You can't delete others' comments");
-            }
-            commentsMapper.deleteById(commentId);
+        String commentId = request.getCommentId();
+        Comment comment = commentsMapper.selectById(commentId);
+        if (comment == null) {
+            return new Response("Comment not found: " + commentId);
         }
+        if (!comment.getUserUUID().equals(userId)) {
+            return new Response("You can't delete others' comments");
+        }
+
+        commentsMapper.deleteById(commentId);
+
+        BigDecimal avgRating = commentsMapper.getAverageRating(comment.getBookUUID());
+        commentsMapper.updateRating(comment.getBookUUID(), avgRating);
 
         return new Response("success");
     }

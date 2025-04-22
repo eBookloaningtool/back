@@ -4,11 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class AddReviewRequest {
     private String bookId;
-    private int rating;
+    private BigDecimal rating;
     private String comment;
 }
