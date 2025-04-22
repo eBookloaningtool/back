@@ -18,6 +18,10 @@ public interface BookMapper {
     @Update("update Book set availableCopies = availableCopies + #{delta} where bookId = #{id}")
     void updateAvailableCopies(String id, int delta);
 
+    //书本借阅次数加1
+    @Update("update Book set borrowTimes = borrowTimes + 1 where bookId = #{id}")
+    void updateBorrowTimes(String id);
+
     //获取借阅次数最多的前5本书
     @Select("SELECT bookId FROM Book ORDER BY borrowTimes DESC LIMIT 5")
     List<String> findTop5PopularBooks();

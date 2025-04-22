@@ -143,12 +143,12 @@ public class EmailServiceTest {
         EmailResponse.EmailData emailData = new EmailResponse.EmailData();
         emailData.setSucceeded(0);
         emailData.setFailed(1);
-        
+
         EmailResponse.FailureInfo failureInfo = new EmailResponse.FailureInfo();
         failureInfo.setRecipient("wzwttol@outlook.com");
         failureInfo.setErrorCode("INVALID_EMAIL");
         failureInfo.setErrorMessage("Invalid email address");
-        
+
         emailData.setFailures(List.of(failureInfo));
 
         EmailResponse emailResponse = new EmailResponse();

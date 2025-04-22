@@ -4,17 +4,19 @@ import lombok.Getter;
 import lombok.Setter;
 import one.wcy.ebookloaningtool.utils.Response;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 @Getter
 @Setter
 public class RenewResponse extends Response {
-    private LocalDateTime newDueDate;
-
-    public RenewResponse(String state, LocalDateTime localDateTime) {
+    private LocalDate newDueDate;
+    private BigDecimal balance;
+    public RenewResponse(String state, LocalDate localDate, BigDecimal balance) {
         super(state);
-        this.newDueDate = localDateTime;
+        this.newDueDate = localDate;
+        this.balance = balance;
     }
 
 }

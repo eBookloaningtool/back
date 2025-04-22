@@ -1,32 +1,33 @@
 package one.wcy.ebookloaningtool.llf.service.impl;
 
 import one.wcy.ebookloaningtool.llf.mapper.BookMapper;
+import one.wcy.ebookloaningtool.llf.mapper.BorrowRecordsMapper;
 import one.wcy.ebookloaningtool.llf.pojo.Book;
+import one.wcy.ebookloaningtool.llf.pojo.BorrowHistory;
+import one.wcy.ebookloaningtool.llf.pojo.BorrowList;
 import one.wcy.ebookloaningtool.llf.pojo.BorrowRecords;
-import one.wcy.ebookloaningtool.llf.response.BorrowResponse;
-import one.wcy.ebookloaningtool.llf.response.RenewResponse;
-import one.wcy.ebookloaningtool.llf.service.BorrowRecordsRepository;
+import one.wcy.ebookloaningtool.llf.response.*;
 import one.wcy.ebookloaningtool.llf.service.BorrowService;
 import one.wcy.ebookloaningtool.notification.EmailService;
+import one.wcy.ebookloaningtool.users.User;
 import one.wcy.ebookloaningtool.users.UserRepository;
 import one.wcy.ebookloaningtool.utils.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class BorrowServiceimpl implements BorrowService {
 
     @Autowired
-    private final BorrowRecordsRepository borrowRecordsRepository;
-
-    @Autowired
     private final UserRepository userRepository;
     @Autowired
     private BookMapper bookMapper;
+    @Autowired
+    private BorrowRecordsMapper borrowRecordsMapper;
     @Autowired
     private EmailService emailService;
 
@@ -35,8 +36,7 @@ public class BorrowServiceimpl implements BorrowService {
     //续借时长
     private final int RENEW_DURATION = 30;
 
-    public BorrowServiceimpl(BorrowRecordsRepository borrowRecordsRepository, UserRepository userRepository) {
-        this.borrowRecordsRepository = borrowRecordsRepository;
+    public BorrowServiceimpl(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
@@ -48,25 +48,35 @@ public class BorrowServiceimpl implements BorrowService {
 
     //记录借出
     @Override
-    public Response recordBorrow(String bookUUID, String userUUID) {
-
+    public Response recordBorrow(String bookUUID, String userUUID, BigDecimal price) {
+        BigDecimal balance = userRepository.findByUuid(userUUID).getBalance();
+        BigDecimal newBalance = balance.subtract(price);//计算扣款
+        if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
+            //余额不足
+            return new LowBalanceResponse("insufficient balance", newBalance.negate());//返回需要补齐的金额
+        }
         //判断是否已经有该书的借出记录
         if(checkBorrow(bookUUID, userUUID).isEmpty()){
             //书本库存-1
             bookMapper.updateAvailableCopies(bookUUID, -1);
-
+            //书本借阅次数+1
+            bookMapper.updateBorrowTimes(bookUUID);
             //在BorrowRecords中记录借出
-            LocalDateTime dueTime;
-            LocalDateTime borrowTime = LocalDateTime.now();
+            LocalDate dueTime;
+            LocalDate borrowTime = LocalDate.now();
             dueTime = borrowTime.plusDays(BORROW_DURATION);
             BorrowRecords borrowRecords = new BorrowRecords();
-            borrowRecords.setBookUUID(bookUUID);
-            borrowRecords.setUserUUID(userUUID);
+            borrowRecords.setBookId(bookUUID);
+            borrowRecords.setUuid(userUUID);
             borrowRecords.setBorrowDate(borrowTime);
             borrowRecords.setDueDate(dueTime);
             borrowRecords.setStatus("borrowed");
-            borrowRecordsRepository.save(borrowRecords);
-            return new BorrowResponse("Borrow Successful", dueTime);
+            borrowRecordsMapper.addBorrowRecord(borrowRecords);
+            //更新当前用户的账户余额
+            User user = userRepository.findByUuid(userUUID);
+            user.setBalance(newBalance);
+            userRepository.save(user);
+            return new BorrowResponse("Borrow Successful", dueTime, newBalance);
         }
         else return new Response("The user already borrowed this book.");
 
@@ -82,40 +92,52 @@ public class BorrowServiceimpl implements BorrowService {
             bookMapper.updateAvailableCopies(bookUUID, 1);
 
             BorrowRecords borrowedRecord = brl.getFirst();
-            LocalDateTime returnTime = LocalDateTime.now();
+            LocalDate returnTime = LocalDate.now();
             borrowedRecord.setReturnDate(returnTime);
             borrowedRecord.setStatus("returned");
-            borrowRecordsRepository.save(borrowedRecord);
+            borrowRecordsMapper.updateBorrowRecord(borrowedRecord);
             return new Response("Return Successful");
         }else return new Response("The user do not borrow this book.");
     }
 
     @Override
-    public Response renewBook(String bookUUID, String userUUID) {
-
+    public Response renewBook(String bookUUID, String userUUID, BigDecimal price) {
+        BigDecimal balance = userRepository.findByUuid(userUUID).getBalance();
+        BigDecimal newBalance = balance.subtract(price);//计算扣款
+        if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
+            //余额不足
+            return new LowBalanceResponse("insufficient balance", newBalance.negate());//返回需要补齐的金额
+        }
         //判断是否存在正在借出记录
         List<BorrowRecords> brl = checkBorrow(bookUUID,userUUID);
         if (!brl.isEmpty()){
             //如果存在则延长逾期日期，否则返回当前未借阅该书
             BorrowRecords borrowedRecord = brl.getFirst();
-            LocalDateTime newDueTime = borrowedRecord.getDueDate().plusDays(RENEW_DURATION);
+            LocalDate newDueTime = borrowedRecord.getDueDate().plusDays(RENEW_DURATION);
             borrowedRecord.setDueDate(newDueTime);
-            borrowRecordsRepository.save(borrowedRecord);
-            return new RenewResponse("Renew Successful",newDueTime);
+            borrowRecordsMapper.updateBorrowRecord(borrowedRecord);
+            //书借阅次数+1
+            bookMapper.updateBorrowTimes(bookUUID);
+            //用户余额更新
+            User user = userRepository.findByUuid(userUUID);
+            user.setBalance(newBalance);
+            userRepository.save(user);
+            return new RenewResponse("Renew Successful",newDueTime, newBalance);
         }else return new Response("The user do not borrow this book.");
     }
 
     @Override
     public void overdueReminder(int i) {
-        List<BorrowRecords> brl = borrowRecordsRepository.findByStatus("borrowed");
+        //List<BorrowRecords> brl = borrowRecordsRepository.findByStatus("borrowed");
+        List<BorrowRecords> brl = borrowRecordsMapper.findByStatus("borrowed");
         LocalDate ReminderDate = LocalDate.now().plusDays(i);//根据传入i，计算需要提醒的书籍的逾期日期
 
         for (BorrowRecords borrowRecords : brl) {
-            LocalDate dueDate = borrowRecords.getDueDate().toLocalDate();//获取逾期日期
+            LocalDate dueDate = borrowRecords.getDueDate();//获取逾期日期
             if (ReminderDate.equals(dueDate)) {
-                String userUUID = borrowRecords.getUserUUID();
+                String userUUID = borrowRecords.getUuid();
                 String emailAddress = userRepository.findByUuid(userUUID).getEmail();//根据UUID获取email地址
-                String bookName = bookMapper.findBookById(borrowRecords.getBookUUID()).getTitle() ;//根据bookId获取书名
+                String bookName = bookMapper.findBookById(borrowRecords.getBookId()).getTitle() ;//根据bookId获取书名
                 //发送邮件
                 emailService.sendTextEmail(emailAddress, "Book overdue reminder", "Your book:"+ bookName + " will overdue in "+ i + "days.");
             }
@@ -125,22 +147,36 @@ public class BorrowServiceimpl implements BorrowService {
     @Override
     public void autoReturn() {
         LocalDate dueDate = LocalDate.now();
-        List<BorrowRecords> brl = borrowRecordsRepository.findByStatus("borrowed");
+        List<BorrowRecords> brl = borrowRecordsMapper.findByStatus("borrowed");
         for (BorrowRecords borrowRecords : brl) {
-            if (borrowRecords.getDueDate().toLocalDate().equals(dueDate)) {
+            if (borrowRecords.getDueDate().equals(dueDate)) {
                 //更改借阅状态
                 borrowRecords.setStatus("returned");
                 //设置归还时间为当前时间
-                borrowRecords.setReturnDate(LocalDateTime.now());
-                borrowRecordsRepository.save(borrowRecords);
+                borrowRecords.setReturnDate(LocalDate.now());
+                borrowRecordsMapper.updateBorrowRecord(borrowRecords);
                 //库存+1
-                bookMapper.updateAvailableCopies(borrowRecords.getBookUUID(), 1);
+                bookMapper.updateAvailableCopies(borrowRecords.getBookId(), 1);
             }
         }
     }
 
+    @Override
+    //获取借阅列表
+    public Response getBorrowList(String userID) {
+        List<BorrowList> brl = borrowRecordsMapper.findBorrowList(userID, "borrowed");
+        return new BorrowListResponse("success", brl);
+    }
+
+    @Override
+    //获取借阅历史记录
+    public Response getBorrowHistory(String userID) {
+        List<BorrowHistory> brl = borrowRecordsMapper.findBorrowHistory(userID);
+        return new BorrowHistoryResponse("success", brl);
+    }
+
     private List<BorrowRecords> checkBorrow(String bookUUID, String userUUID) {
-        return borrowRecordsRepository.findByBookUUIDAndUserUUIDAndStatus(bookUUID,userUUID,"borrowed");
+        return borrowRecordsMapper.findByBookUUIDAndUserUUIDAndStatus(bookUUID, userUUID, "borrowed");
     }
 
     @Override

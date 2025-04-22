@@ -32,7 +32,7 @@ public class BorrowController {
         }
         else{
                 //借出书籍
-                return borrowService.recordBorrow(b.getBookId(), userID);
+                return borrowService.recordBorrow(b.getBookId(), userID, b.getPrice());
         }
     }
 
@@ -57,6 +57,22 @@ public class BorrowController {
         if (b == null) {
             return new Response("Book not exist.");
         }
-        else return borrowService.renewBook(b.getBookId(), userID);
+        else return borrowService.renewBook(b.getBookId(), userID, b.getPrice());
+    }
+
+    @PostMapping("/borrowlist")
+    public Response borrowList() {
+        //从令牌中获取用户uuid
+        Claims claims = ThreadLocalUtil.get();
+        String userID = claims.get("uuid").toString();
+        return borrowService.getBorrowList(userID);
+    }
+
+    @PostMapping("/history")
+    public Response history() {
+        //从令牌中获取用户uuid
+        Claims claims = ThreadLocalUtil.get();
+        String userID = claims.get("uuid").toString();
+        return borrowService.getBorrowHistory(userID);
     }
 }
