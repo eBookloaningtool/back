@@ -50,7 +50,7 @@ public class PaymentServiceImpl implements PaymentService {
         // 记录支付流水
         PaymentRecord payment = new PaymentRecord();
         payment.setPaymentId(UUID.randomUUID().toString());
-        payment.setUserUUID(userId);
+        payment.setUuid(userId);
         payment.setAmount(BigDecimal.valueOf(request.getAmount()));
         payment.setPaymentDate(LocalDateTime.now());
         paymentMapper.insert(payment);

@@ -14,14 +14,14 @@ import java.time.LocalDateTime;
 @Table(name = "Comments")
 public class Comment {
     @Id
-    @Column(name = "commentUUID")
+    @Column(name = "commentId")
     private String commentId; // 主键
 
-    @Column(name = "userUUID", nullable = false)
-    private String userUUID; // 外键关联Users表
+    @Column(name = "uuid", nullable = false)
+    private String uuid; // 外键关联Users表
 
-    @Column(name = "bookUUID", nullable = false)
-    private String bookUUID; // 外键关联Books表
+    @Column(name = "bookId", nullable = false)
+    private String bookId; // 外键关联Books表
 
     @Column(name = "content", nullable = false)
     private String content;

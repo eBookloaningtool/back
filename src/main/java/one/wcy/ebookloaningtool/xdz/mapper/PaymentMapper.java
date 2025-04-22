@@ -9,15 +9,15 @@ import java.util.List;
 
 @Mapper
 public interface PaymentMapper {
-    @Insert("INSERT INTO PaymentRecords (paymentUUID, userUUID, amount, paymentDate) " +
-            "VALUES (#{paymentId}, #{userUUID}, #{amount}, NOW())")
+    @Insert("INSERT INTO PaymentRecords (paymentId, uuid, amount, paymentDate) " +
+            "VALUES (#{paymentId}, #{uuid}, #{amount}, NOW())")
     void insert(PaymentRecord payment);
 
-    @Update("UPDATE user SET balance = balance + #{amount} WHERE uuid = #{userUUID}")
-    void updateBalance(@Param("userUUID") String userUUID, @Param("amount") BigDecimal amount);
+    @Update("UPDATE user SET balance = balance + #{amount} WHERE uuid = #{uuid}")
+    void updateBalance(@Param("uuid") String uuid, @Param("amount") BigDecimal amount);
 
-    @Select("SELECT paymentUUID, paymentDate, amount " +
-            "FROM PaymentRecords WHERE userUUID = #{userId} ORDER BY paymentDate DESC")
+    @Select("SELECT paymentId, paymentDate, amount " +
+            "FROM PaymentRecords WHERE uuid = #{userId} ORDER BY paymentDate DESC")
     List<PaymentHistoryResponse.PaymentHistoryItem> findUserPaymentHistory(String userId);
 }
 

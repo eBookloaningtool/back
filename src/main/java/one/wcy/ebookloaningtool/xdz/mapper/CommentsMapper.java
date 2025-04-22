@@ -8,26 +8,26 @@ import java.util.List;
 
 @Mapper
 public interface CommentsMapper {
-    @Insert("INSERT INTO Comments (commentUUID, userUUID, bookUUID, content, createdAt, updateAt,  rating) " +
-            "VALUES (#{commentId}, #{userUUID}, #{bookUUID}, #{content}, NOW(), NOW(), #{rating})")
+    @Insert("INSERT INTO Comments (commentId, uuid, bookId, content, createdAt, updateAt,  rating) " +
+            "VALUES (#{commentId}, #{uuid}, #{bookId}, #{content}, NOW(), NOW(), #{rating})")
     void insert(Comment comment);
 
-    @Select("SELECT AVG(rating) FROM Comments WHERE bookUUID = #{bookId}")
+    @Select("SELECT AVG(rating) FROM Comments WHERE bookId = #{bookId}")
     BigDecimal getAverageRating(String bookId);
 
-    @Update("UPDATE book SET rating = #{rating} WHERE bookId = #{bookId}")
+    @Update("UPDATE Book SET rating = #{rating} WHERE bookId = #{bookId}")
     void updateRating(@Param("bookId") String bookId, @Param("rating") BigDecimal rating);
 
-    @Select("SELECT commentUUID FROM Comments WHERE userUUID = #{userId} ORDER BY createdAt DESC")
+    @Select("SELECT commentId FROM Comments WHERE uuid = #{userId} ORDER BY createdAt DESC")
     List<String> findByUserId(String userId);
 
-    @Select("SELECT commentUUID FROM Comments WHERE bookUUID = #{bookId} ORDER BY createdAt DESC")
+    @Select("SELECT commentId FROM Comments WHERE bookId = #{bookId} ORDER BY createdAt DESC")
     List<String> findByBookId(String bookId);
 
-    @Select("SELECT * FROM Comments WHERE commentUUID = #{commentId}")
+    @Select("SELECT * FROM Comments WHERE commentId = #{commentId}")
     Comment selectById(String commentId);
 
-    @Delete("DELETE FROM Comments WHERE commentUUID = #{commentId}")
+    @Delete("DELETE FROM Comments WHERE commentId = #{commentId}")
     void deleteById(String commentId);
 
     @Select("SELECT COUNT(*) FROM borrow_records " +

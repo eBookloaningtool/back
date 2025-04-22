@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Setter
 @Getter
 @Entity
@@ -16,7 +18,17 @@ public class User {
     private String email;
     private String name;
     private String password;
-    
+
+    private double balance; // 用户余额
+
+    @Column(name = "created_at")
+    private LocalDate createdat; // 创建日期
+
+    @PrePersist
+    protected void onCreate() {
+        createdat = LocalDate.now();
+    }
+
     public void setEncodedPassword(String encodedPassword) {
         this.password = encodedPassword;
     }

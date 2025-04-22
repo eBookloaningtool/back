@@ -11,11 +11,11 @@ import java.time.LocalDateTime;
 @Table(name = "PaymentRecords")
 public class PaymentRecord {
     @Id
-    @Column(name = "paymentUUID")
+    @Column(name = "paymentId")
     private String paymentId; // 主键
 
-    @Column(name = "userUUID", nullable = false)
-    private String userUUID; // 外键关联Users表
+    @Column(name = "uuid", nullable = false)
+    private String uuid; // 外键关联Users表
 
     @Column(name = "amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;

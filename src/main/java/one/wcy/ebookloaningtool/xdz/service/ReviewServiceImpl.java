@@ -67,8 +67,8 @@ public class ReviewServiceImpl implements ReviewService {
         // 5. 保存评论到数据库
         Comment comment = new Comment();
         comment.setCommentId(UUID.randomUUID().toString());
-        comment.setUserUUID(userId);
-        comment.setBookUUID(request.getBookId());
+        comment.setUuid(userId);
+        comment.setBookId(request.getBookId());
         comment.setContent(request.getComment());
         comment.setRating(request.getRating());
         commentsMapper.insert(comment);
@@ -91,7 +91,11 @@ public class ReviewServiceImpl implements ReviewService {
 
         List<String> commentIds = commentsMapper.findByUserId(userId);
 
-        return new GetReviewsResponse("commentId", commentIds);
+        if (commentIds.isEmpty()) {
+            return new Response("No valid comments.");
+        }
+
+        return new GetReviewsResponse("success", commentIds);
     }
 
     @Override
@@ -107,7 +111,7 @@ public class ReviewServiceImpl implements ReviewService {
         List<String> commentIds = commentsMapper.findByBookId(bookId);
 
         if (commentIds.isEmpty()) {
-            return new Response("No related comments.");
+            return new Response("No valid comments.");
         }
 
         return new GetReviewsResponse("success", commentIds);
@@ -125,7 +129,7 @@ public class ReviewServiceImpl implements ReviewService {
             return new Response("Comment not found");
         }
 
-        return new CommentContentResponse("success", comment.getUserUUID(),
+        return new CommentContentResponse("success", comment.getUuid(),
                 comment.getRating(), comment.getContent());
     }
 
@@ -142,14 +146,14 @@ public class ReviewServiceImpl implements ReviewService {
         if (comment == null) {
             return new Response("Comment not found: " + commentId);
         }
-        if (!comment.getUserUUID().equals(userId)) {
+        if (!comment.getUuid().equals(userId)) {
             return new Response("You can't delete others' comments");
         }
 
         commentsMapper.deleteById(commentId);
 
-        BigDecimal avgRating = commentsMapper.getAverageRating(comment.getBookUUID());
-        commentsMapper.updateRating(comment.getBookUUID(), avgRating);
+        BigDecimal avgRating = commentsMapper.getAverageRating(comment.getBookId());
+        commentsMapper.updateRating(comment.getBookId(), avgRating);
 
         return new Response("success");
     }
