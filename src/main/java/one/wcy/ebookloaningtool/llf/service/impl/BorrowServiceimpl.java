@@ -1,7 +1,7 @@
 package one.wcy.ebookloaningtool.llf.service.impl;
 
 import one.wcy.ebookloaningtool.llf.mapper.BookMapper;
-import one.wcy.ebookloaningtool.llf.pojo.Books;
+import one.wcy.ebookloaningtool.llf.pojo.Book;
 import one.wcy.ebookloaningtool.llf.pojo.BorrowRecords;
 import one.wcy.ebookloaningtool.llf.response.BorrowResponse;
 import one.wcy.ebookloaningtool.llf.response.RenewResponse;
@@ -30,14 +30,19 @@ public class BorrowServiceimpl implements BorrowService {
     @Autowired
     private EmailService emailService;
 
+    //一次租借时长
+    private final int BORROW_DURATION = 30;
+    //续借时长
+    private final int RENEW_DURATION = 30;
+
     public BorrowServiceimpl(BorrowRecordsRepository borrowRecordsRepository, UserRepository userRepository) {
         this.borrowRecordsRepository = borrowRecordsRepository;
         this.userRepository = userRepository;
     }
 
     @Override
-    public Books findBookById(String bookUUID){
-        Books b = bookMapper.findBookById(bookUUID);
+    public Book findBookById(String bookUUID){
+        Book b = bookMapper.findBookById(bookUUID);
         return b;
     }
 
@@ -48,12 +53,12 @@ public class BorrowServiceimpl implements BorrowService {
         //判断是否已经有该书的借出记录
         if(checkBorrow(bookUUID, userUUID).isEmpty()){
             //书本库存-1
-            bookMapper.updateStock(bookUUID, -1);
+            bookMapper.updateAvailableCopies(bookUUID, -1);
 
             //在BorrowRecords中记录借出
             LocalDateTime dueTime;
             LocalDateTime borrowTime = LocalDateTime.now();
-            dueTime = borrowTime.plusDays(30);//一次租借时长30天？
+            dueTime = borrowTime.plusDays(BORROW_DURATION);
             BorrowRecords borrowRecords = new BorrowRecords();
             borrowRecords.setBookUUID(bookUUID);
             borrowRecords.setUserUUID(userUUID);
@@ -74,7 +79,7 @@ public class BorrowServiceimpl implements BorrowService {
         List<BorrowRecords> brl = checkBorrow(bookUUID,userUUID);
         if (!brl.isEmpty()){
             //如果存在则将该书库存+1，将对应记录的status改为“returned"，并记录归还日期,否则返回当前未借阅该书
-            bookMapper.updateStock(bookUUID, 1);
+            bookMapper.updateAvailableCopies(bookUUID, 1);
 
             BorrowRecords borrowedRecord = brl.getFirst();
             LocalDateTime returnTime = LocalDateTime.now();
@@ -93,8 +98,8 @@ public class BorrowServiceimpl implements BorrowService {
         if (!brl.isEmpty()){
             //如果存在则延长逾期日期，否则返回当前未借阅该书
             BorrowRecords borrowedRecord = brl.getFirst();
-            LocalDateTime newDueTime = borrowedRecord.getDueDate().plusDays(30);
-            borrowedRecord.setDueDate(newDueTime);//暂定固定续借30天？理论上需要前端指定
+            LocalDateTime newDueTime = borrowedRecord.getDueDate().plusDays(RENEW_DURATION);
+            borrowedRecord.setDueDate(newDueTime);
             borrowRecordsRepository.save(borrowedRecord);
             return new RenewResponse("Renew Successful",newDueTime);
         }else return new Response("The user do not borrow this book.");
@@ -129,7 +134,7 @@ public class BorrowServiceimpl implements BorrowService {
                 borrowRecords.setReturnDate(LocalDateTime.now());
                 borrowRecordsRepository.save(borrowRecords);
                 //库存+1
-                bookMapper.updateStock(borrowRecords.getBookUUID(), 1);
+                bookMapper.updateAvailableCopies(borrowRecords.getBookUUID(), 1);
             }
         }
     }
