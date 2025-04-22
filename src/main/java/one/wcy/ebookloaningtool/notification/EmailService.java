@@ -128,7 +128,13 @@ public class EmailService {
             return true;
             
         } catch (MessagingException e) {
-            log.error("Exception occurred during email sending", e);
+            log.error("MessagingException occurred during email sending", e);
+            return false;
+        } catch (org.springframework.mail.MailException e) {
+            log.error("MailException occurred during email sending", e);
+            return false;
+        } catch (RuntimeException e) {
+            log.error("Unexpected runtime exception occurred during email sending", e);
             return false;
         }
     }
