@@ -19,6 +19,7 @@ public class User {
     private String email;
     private String name;
     private String password;
+
     
     private BigDecimal balance; // 用户余额
     
@@ -29,7 +30,7 @@ public class User {
     protected void onCreate() {
         createdat = LocalDate.now();
     }
-    
+
     public void setEncodedPassword(String encodedPassword) {
         this.password = encodedPassword;
     }
