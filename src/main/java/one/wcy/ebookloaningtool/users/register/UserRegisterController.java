@@ -7,12 +7,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
+
 @RestController
 public class UserRegisterController {
 
     private final UserRepository userRepository;
     private final PasswordEncoderService passwordEncoderService;
-    private static final double INITIAL_BALANCE = 0.0; // 初始余额设置为0
+    private static final BigDecimal INITIAL_BALANCE = BigDecimal.valueOf(0.00); // 初始余额设置为0
 
     public UserRegisterController(UserRepository userRepository, PasswordEncoderService passwordEncoderService) {
         this.userRepository = userRepository;

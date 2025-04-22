@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Setter
@@ -20,7 +21,7 @@ public class User {
     private String password;
 
     
-    private double balance; // 用户余额
+    private BigDecimal balance; // 用户余额
     
     @Column(name = "created_at")
     private LocalDate createdat; // 创建日期
