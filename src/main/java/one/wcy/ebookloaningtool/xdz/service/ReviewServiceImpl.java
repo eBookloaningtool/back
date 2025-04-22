@@ -2,7 +2,7 @@ package one.wcy.ebookloaningtool.xdz.service;
 
 import io.jsonwebtoken.Claims;
 import one.wcy.ebookloaningtool.llf.mapper.BookMapper;
-import one.wcy.ebookloaningtool.llf.pojo.Books;
+import one.wcy.ebookloaningtool.llf.pojo.Book;
 import one.wcy.ebookloaningtool.llf.service.BorrowService;
 import one.wcy.ebookloaningtool.utils.Response;
 import one.wcy.ebookloaningtool.utils.ThreadLocalUtil;
@@ -53,7 +53,7 @@ public class ReviewServiceImpl implements ReviewService {
 
 
         // 3. 检查书籍是否存在（调用现有BorrowService的findBookById）
-        Books book = borrowService.findBookById(request.getBookId());
+        Book book = borrowService.findBookById(request.getBookId());
         if (book == null) {
             return new Response("Book not exist");
         }

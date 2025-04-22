@@ -55,7 +55,7 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setPaymentDate(LocalDateTime.now());
         paymentMapper.insert(payment);
 
-        double balance = userRepository.findByUuid(userId).getBalance();
+        BigDecimal balance = userRepository.findByUuid(userId).getBalance();
 
         return new TopUpResponse("success", payment.getPaymentId(), balance);
     }
