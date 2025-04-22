@@ -2,40 +2,26 @@ package one.wcy.ebookloaningtool.users.info;
 
 import lombok.Getter;
 import lombok.Setter;
+import one.wcy.ebookloaningtool.utils.Response;
 
 import java.time.LocalDate;
-import java.util.List;
+import java.math.BigDecimal;
 
 @Getter
 @Setter
-public class UserInfoResponse {
+public class UserInfoResponse extends Response {
     private String UUID;
     private String name;
     private String email;
-    private double balance;
+    private BigDecimal balance;
     private LocalDate createdat;
-    private List<String> borrowedBooks;
-    private List<String> historicalBooks;
-    private List<String> wishlist;
-    private List<String> star;
-    private List<String> shoppingcart;
-    private List<String> transactionHistory;
 
-    public UserInfoResponse(String UUID, String name, String email, double balance, 
-                            LocalDate createdat, List<String> borrowedBooks, 
-                            List<String> historicalBooks, List<String> wishlist, 
-                            List<String> star, List<String> shoppingcart, 
-                            List<String> transactionHistory) {
+    public UserInfoResponse(String state, String UUID, String name, String email, BigDecimal balance, LocalDate createdat) {
+        super(state);
         this.UUID = UUID;
         this.name = name;
         this.email = email;
         this.balance = balance;
         this.createdat = createdat;
-        this.borrowedBooks = borrowedBooks;
-        this.historicalBooks = historicalBooks;
-        this.wishlist = wishlist;
-        this.star = star;
-        this.shoppingcart = shoppingcart;
-        this.transactionHistory = transactionHistory;
     }
 } 
