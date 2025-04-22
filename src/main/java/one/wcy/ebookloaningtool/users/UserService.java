@@ -1,9 +1,9 @@
 package one.wcy.ebookloaningtool.users;
 
 import one.wcy.ebookloaningtool.security.PasswordEncoderService;
-import one.wcy.ebookloaningtool.users.delete.DeleteUserResponse;
 import one.wcy.ebookloaningtool.users.update.UpdateUserRequest;
 import one.wcy.ebookloaningtool.users.update.UpdateUserResponse;
+import one.wcy.ebookloaningtool.utils.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -46,7 +46,7 @@ public class UserService {
         );
     }
     
-    public DeleteUserResponse deleteUser(String uuid) {
+    public Response deleteUser(String uuid) {
         try {
             User user = userRepository.findById(uuid)
                     .orElseThrow(() -> new RuntimeException("User not found"));
@@ -54,9 +54,9 @@ public class UserService {
             // Delete the user
             userRepository.delete(user);
             
-            return new DeleteUserResponse("success");
+            return new Response("success");
         } catch (Exception e) {
-            return new DeleteUserResponse("error");
+            return new Response("error");
         }
     }
 } 

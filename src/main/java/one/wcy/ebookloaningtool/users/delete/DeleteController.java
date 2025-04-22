@@ -3,6 +3,7 @@ package one.wcy.ebookloaningtool.users.delete;
 import io.jsonwebtoken.Claims;
 import one.wcy.ebookloaningtool.security.JwtTokenService;
 import one.wcy.ebookloaningtool.users.UserService;
+import one.wcy.ebookloaningtool.utils.Response;
 import one.wcy.ebookloaningtool.utils.ThreadLocalUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,13 +26,13 @@ public class DeleteController {
     }
 
     @PostMapping("/delete")
-    public ResponseEntity<DeleteUserResponse> deleteUser() {
+    public ResponseEntity<Response> deleteUser() {
         // 从ThreadLocal获取claims
         Claims claims = ThreadLocalUtil.get();
         String uuid = claims.get("uuid", String.class);
 
         // 删除用户
-        DeleteUserResponse response = userService.deleteUser(uuid);
+        Response response = userService.deleteUser(uuid);
 
         // 使该用户的所有令牌失效
         if (response.getState().equals("success")) {

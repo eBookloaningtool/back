@@ -21,4 +21,7 @@ public interface BorrowService {
     void overdueReminder(int i);
     //逾期自动归还
     void autoReturn();
+    
+    //获取电子书内容
+    String getBookContent(String bookUUID, String userUUID);
 }

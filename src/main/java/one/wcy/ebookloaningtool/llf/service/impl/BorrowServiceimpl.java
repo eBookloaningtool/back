@@ -78,7 +78,7 @@ public class BorrowServiceimpl implements BorrowService {
         //判断是否存在正在借出记录
         List<BorrowRecords> brl = checkBorrow(bookUUID,userUUID);
         if (!brl.isEmpty()){
-            //如果存在则将该书库存+1，将对应记录的status改为“returned"，并记录归还日期,否则返回当前未借阅该书
+            //如果存在则将该书库存+1，将对应记录的status改为"returned"，并记录归还日期,否则返回当前未借阅该书
             bookMapper.updateAvailableCopies(bookUUID, 1);
 
             BorrowRecords borrowedRecord = brl.getFirst();
@@ -143,5 +143,17 @@ public class BorrowServiceimpl implements BorrowService {
         return borrowRecordsRepository.findByBookUUIDAndUserUUIDAndStatus(bookUUID,userUUID,"borrowed");
     }
 
+    @Override
+    public String getBookContent(String bookUUID, String userUUID) {
+        // 检查用户是否正在借阅该书
+        List<BorrowRecords> borrowRecords = checkBorrow(bookUUID, userUUID);
+        if (borrowRecords.isEmpty()) {
+            return null; // 用户未借阅该书，返回null
+        }
+        
+        // 用户正在借阅该书，返回内容URL
+        Book book = bookMapper.findBookById(bookUUID);
+        return book != null ? book.getContentURL() : null;
+    }
 
 }
