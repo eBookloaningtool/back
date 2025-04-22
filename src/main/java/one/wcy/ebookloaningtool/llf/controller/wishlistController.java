@@ -2,7 +2,6 @@ package one.wcy.ebookloaningtool.llf.controller;
 
 import io.jsonwebtoken.Claims;
 import one.wcy.ebookloaningtool.llf.pojo.Book;
-import one.wcy.ebookloaningtool.llf.pojo.BooksRemoveRequest;
 import one.wcy.ebookloaningtool.llf.service.BorrowService;
 import one.wcy.ebookloaningtool.llf.service.WishlistService;
 import one.wcy.ebookloaningtool.utils.Response;
@@ -10,7 +9,6 @@ import one.wcy.ebookloaningtool.utils.ThreadLocalUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/wishlist")
@@ -38,11 +36,10 @@ public class wishlistController {
     }
 
     @PostMapping("/delete")
-    public Response delete(@RequestBody BooksRemoveRequest books){
+    public Response delete(@RequestBody Book book){
         Claims claims = ThreadLocalUtil.get();
         String userID = claims.get("uuid").toString();
-        List<String> bs = books.getBookId();
-        return wishlistService.deleteBook(bs, userID);
+        return wishlistService.deleteBook(book.getBookId(), userID);
     }
 
     @PostMapping("get")
