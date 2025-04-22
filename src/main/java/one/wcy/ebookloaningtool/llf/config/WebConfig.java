@@ -15,6 +15,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         //登录接口、注册接口、忘记密码接口和电子书管理不拦截
-        registry.addInterceptor(logininterceptor).excludePathPatterns("/api/users/register", "/api/auth/login", "/api/auth/forget", "/api/books/get", "/api/books/popular");
+        registry.addInterceptor(logininterceptor).excludePathPatterns("/api/users/register", "/api/auth/login", "/api/auth/forget", "/api/books/get", "/api/books/popular", "/api/books/search");
     }
 }
