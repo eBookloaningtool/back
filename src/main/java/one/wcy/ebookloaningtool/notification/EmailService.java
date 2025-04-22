@@ -1,38 +1,29 @@
 package one.wcy.ebookloaningtool.notification;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Email service using SMTP2GO API to send emails
+ * Email service using SMTP to send emails
  */
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class EmailService {
     
-    private final RestTemplate restTemplate;
+    private final JavaMailSender mailSender;
     
-    @Value("${smtp2go.api.url}")
-    private String apiUrl;
-    
-    @Value("${smtp2go.api.key}")
-    private String apiKey;
-    
-    @Value("${smtp2go.sender.email}")
+    @Value("${spring.mail.username}")
     private String senderEmail;
     
     /**
@@ -97,61 +88,53 @@ public class EmailService {
     public boolean sendEmail(List<String> toList, List<String> ccList, List<String> bccList, 
                           String subject, String textBody, String htmlBody) {
         try {
-            // Create request headers
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("X-Smtp2go-Api-Key", apiKey);
-            
-            // Create request body
-            Map<String, Object> requestMap = new HashMap<>();
-            requestMap.put("sender", senderEmail);
-            requestMap.put("to", toList);
-            
-            if (ccList != null && !ccList.isEmpty()) {
-                requestMap.put("cc", ccList);
-            }
-            
-            if (bccList != null && !bccList.isEmpty()) {
-                requestMap.put("bcc", bccList);
-            }
-            
-            requestMap.put("subject", subject);
-            
-            if (textBody != null && !textBody.isEmpty()) {
-                requestMap.put("text_body", textBody);
-            }
+            log.info("Attempting to send email to: {}, Subject: {}", toList, subject);
             
             if (htmlBody != null && !htmlBody.isEmpty()) {
-                requestMap.put("html_body", htmlBody);
-            }
-            
-            // Create HTTP request
-            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestMap, headers);
-            
-            // Send request
-            ResponseEntity<EmailResponse> response = restTemplate.postForEntity(apiUrl, request, EmailResponse.class);
-            
-            // Process response
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                EmailResponse emailResponse = response.getBody();
-                EmailResponse.EmailData data = emailResponse.getData();
+                // Send HTML email
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true);
                 
-                if (data != null && data.getSucceeded() > 0) {
-                    log.info("Email sent successfully, ID: {}, Succeeded: {}", data.getEmailId(), data.getSucceeded());
-                    return true;
-                } else if (data != null && data.getFailed() > 0 && data.getFailures() != null) {
-                    data.getFailures().forEach(failure -> 
-                        log.error("Email sending failed, Recipient: {}, Error code: {}, Error message: {}", 
-                            failure.getRecipient(), failure.getErrorCode(), failure.getErrorMessage())
-                    );
+                helper.setFrom(senderEmail);
+                helper.setTo(toList.toArray(new String[0]));
+                if (ccList != null && !ccList.isEmpty()) {
+                    helper.setCc(ccList.toArray(new String[0]));
                 }
+                if (bccList != null && !bccList.isEmpty()) {
+                    helper.setBcc(bccList.toArray(new String[0]));
+                }
+                helper.setSubject(subject);
+                helper.setText(htmlBody, true);
+                
+                mailSender.send(message);
+            } else {
+                // Send plain text email
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(senderEmail);
+                message.setTo(toList.toArray(new String[0]));
+                if (ccList != null && !ccList.isEmpty()) {
+                    message.setCc(ccList.toArray(new String[0]));
+                }
+                if (bccList != null && !bccList.isEmpty()) {
+                    message.setBcc(bccList.toArray(new String[0]));
+                }
+                message.setSubject(subject);
+                message.setText(textBody != null && !textBody.isEmpty() ? textBody : " ");
+                
+                mailSender.send(message);
             }
             
-            log.error("Email sending failed, Status code: {}, Response body: {}", response.getStatusCode(), response.getBody());
-            return false;
+            log.info("Email sent successfully");
+            return true;
             
-        } catch (Exception e) {
-            log.error("Exception occurred during email sending", e);
+        } catch (MessagingException e) {
+            log.error("MessagingException occurred during email sending", e);
+            return false;
+        } catch (org.springframework.mail.MailException e) {
+            log.error("MailException occurred during email sending", e);
+            return false;
+        } catch (RuntimeException e) {
+            log.error("Unexpected runtime exception occurred during email sending", e);
             return false;
         }
     }
