@@ -19,11 +19,12 @@ public class User {
     private String name;
     private String password;
 
+    
     private double balance; // 用户余额
-
+    
     @Column(name = "created_at")
     private LocalDate createdat; // 创建日期
-
+    
     @PrePersist
     protected void onCreate() {
         createdat = LocalDate.now();

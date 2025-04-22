@@ -1,7 +1,7 @@
 package one.wcy.ebookloaningtool.llf.controller;
 
 import io.jsonwebtoken.Claims;
-import one.wcy.ebookloaningtool.llf.pojo.Books;
+import one.wcy.ebookloaningtool.llf.pojo.Book;
 import one.wcy.ebookloaningtool.llf.pojo.BooksRemoveRequest;
 import one.wcy.ebookloaningtool.llf.service.BorrowService;
 import one.wcy.ebookloaningtool.llf.service.CartService;
@@ -22,15 +22,15 @@ public class CartController {
     private CartService cartService;
 
     @PostMapping("/add")
-    public Response add(@RequestBody Books book){
+    public Response add(@RequestBody Book book){
         //从令牌中获取用户uuid
         Claims claims = ThreadLocalUtil.get();
         String userID = claims.get("uuid").toString();
-        Books b = borrowService.findBookById(book.getBookId());
+        Book b = borrowService.findBookById(book.getBookId());
         //没找到对应书籍
         if(b == null) return new Response("Book not exist.");
         //没有库存
-        else if (b.getStock() < 1) return new Response("Stock is too low.");
+        else if (b.getAvailableCopies() < 1) return new Response("Stock is too low.");
         //将书添加到愿望清单
         else return cartService.addBook(b.getBookId(), userID);
     }

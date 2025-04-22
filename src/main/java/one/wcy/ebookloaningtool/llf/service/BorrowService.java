@@ -1,12 +1,12 @@
 package one.wcy.ebookloaningtool.llf.service;
 
-import one.wcy.ebookloaningtool.llf.pojo.Books;
+import one.wcy.ebookloaningtool.llf.pojo.Book;
 import one.wcy.ebookloaningtool.utils.Response;
 
 public interface BorrowService {
 
     //根据书UUID查找书籍
-    Books findBookById(String bookUUID);
+    Book findBookById(String bookUUID);
 
     //记录借出
     Response recordBorrow(String bookUUID, String userUUID);

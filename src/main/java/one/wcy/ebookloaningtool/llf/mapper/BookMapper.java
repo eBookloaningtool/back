@@ -1,6 +1,6 @@
 package one.wcy.ebookloaningtool.llf.mapper;
 
-import one.wcy.ebookloaningtool.llf.pojo.Books;
+import one.wcy.ebookloaningtool.llf.pojo.Book;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
@@ -9,10 +9,10 @@ import org.apache.ibatis.annotations.Update;
 public interface BookMapper {
 
     //根据bookID查询电子书
-    @Select("select * from Books where bookId=#{id}")
-    Books findBookById(String id);
+    @Select("select * from Book where bookId=#{id}")
+    Book findBookById(String id);
 
     //修改book库存（根据传入数值调整）
-    @Update("update Books set stock = stock + #{delta} where bookId = #{id}")
-    void updateStock(String id, int delta);
+    @Update("update Book set availableCopies = availableCopies + #{delta} where bookId = #{id}")
+    void updateAvailableCopies(String id, int delta);
 }

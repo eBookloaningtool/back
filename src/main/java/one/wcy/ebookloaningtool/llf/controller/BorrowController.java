@@ -3,7 +3,7 @@ package one.wcy.ebookloaningtool.llf.controller;
 
 
 import io.jsonwebtoken.Claims;
-import one.wcy.ebookloaningtool.llf.pojo.Books;
+import one.wcy.ebookloaningtool.llf.pojo.Book;
 import one.wcy.ebookloaningtool.llf.service.BorrowService;
 import one.wcy.ebookloaningtool.utils.Response;
 import one.wcy.ebookloaningtool.utils.ThreadLocalUtil;
@@ -17,16 +17,16 @@ public class BorrowController {
     @Autowired
     private BorrowService borrowService;
     @PostMapping("/borrow")
-    public Response borrow(@RequestBody Books book) {
+    public Response borrow(@RequestBody Book book) {
         //从令牌中获取用户uuid
         Claims claims = ThreadLocalUtil.get();
         String userID = claims.get("uuid").toString();
-        Books b = borrowService.findBookById(book.getBookId());
+        Book b = borrowService.findBookById(book.getBookId());
         if (b == null) {
             //没找到对应书籍
             return new Response("Book not exist.");
         }
-        else if (b.getStock() < 1) {
+        else if (b.getAvailableCopies() < 1) {
                 //库存不足
                 return new Response("Stock is too low.");
         }
@@ -37,11 +37,11 @@ public class BorrowController {
     }
 
     @PostMapping("/return")
-    public Response returnBook(@RequestBody Books book) {
+    public Response returnBook(@RequestBody Book book) {
         //从令牌中获取用户uuid
         Claims claims = ThreadLocalUtil.get();
         String userID = claims.get("uuid").toString();
-        Books b = borrowService.findBookById(book.getBookId());
+        Book b = borrowService.findBookById(book.getBookId());
         if (b == null) {
             return new Response("Book not exist.");
         }
@@ -49,11 +49,11 @@ public class BorrowController {
     }
 
     @PostMapping("/renew")
-    public Response renewBook(@RequestBody Books book) {
+    public Response renewBook(@RequestBody Book book) {
         //从令牌中获取用户uuid
         Claims claims = ThreadLocalUtil.get();
         String userID = claims.get("uuid").toString();
-        Books b = borrowService.findBookById(book.getBookId());
+        Book b = borrowService.findBookById(book.getBookId());
         if (b == null) {
             return new Response("Book not exist.");
         }
