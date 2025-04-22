@@ -1,4 +1,4 @@
-package one.wcy.ebookloaningtool.books;
+package one.wcy.ebookloaningtool.books.get;
 
 import lombok.Data;
 import one.wcy.ebookloaningtool.llf.pojo.Book;
