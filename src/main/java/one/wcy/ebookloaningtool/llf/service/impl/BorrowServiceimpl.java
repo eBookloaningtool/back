@@ -128,7 +128,6 @@ public class BorrowServiceimpl implements BorrowService {
 
     @Override
     public void overdueReminder(int i) {
-        //List<BorrowRecords> brl = borrowRecordsRepository.findByStatus("borrowed");
         List<BorrowRecords> brl = borrowRecordsMapper.findByStatus("borrowed");
         LocalDate ReminderDate = LocalDate.now().plusDays(i);//根据传入i，计算需要提醒的书籍的逾期日期
 

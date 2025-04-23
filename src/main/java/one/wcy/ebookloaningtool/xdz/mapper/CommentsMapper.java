@@ -30,7 +30,7 @@ public interface CommentsMapper {
     @Delete("DELETE FROM Comments WHERE commentId = #{commentId}")
     void deleteById(String commentId);
 
-    @Select("SELECT COUNT(*) FROM borrow_records " +
-            "WHERE bookuuid = #{bookId} AND useruuid = #{userId}")
+    @Select("SELECT COUNT(*) FROM BorrowRecords " +
+            "WHERE bookId = #{bookId} AND uuid = #{userId}")
     int countActiveBorrow(@Param("bookId") String bookId, @Param("userId") String userId);
 }
