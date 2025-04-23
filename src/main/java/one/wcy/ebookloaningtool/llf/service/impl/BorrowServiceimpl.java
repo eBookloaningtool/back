@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -50,55 +51,81 @@ public class BorrowServiceimpl implements BorrowService {
 
     //记录借出
     @Override
-    public Response recordBorrow(Book book, String userUUID) {
+    public Response recordBorrow(List<String> bookIds, String userUUID) {
+        BigDecimal price = BigDecimal.ZERO;
+        List<String> invalidBookIds = new ArrayList<>(); //记录已失效书籍ID
+        List<String> lowStockBookIds = new ArrayList<>(); //记录库存不足书籍ID
+        List<String> borrowedBookIds = new ArrayList<>(); //记录已借阅书籍ID
+        List<String> bookNames = new ArrayList<>();//记录借阅的书籍名字
+        //计算总金额，并同时确认book是否有效
+        for(String bId : bookIds){
+            Book book = bookMapper.findBookById(bId);
+            if(book == null){
+                //书不存在
+                invalidBookIds.add(bId);
+            }
+            else if (book.getAvailableCopies() < 1){
+                //库存不足
+                lowStockBookIds.add(bId);
+            }
+            else if (!checkBorrow(bId,userUUID).isEmpty()) {
+                //已借阅
+                borrowedBookIds.add(bId);
+            } else{
+                price = price.add(book.getPrice());
+            }
+        }
+        //如果存在失效/库存不足/已借阅的书籍，返回借阅失效书籍信息
+        if (!invalidBookIds.isEmpty() || !lowStockBookIds.isEmpty() || !borrowedBookIds.isEmpty()) {
+            return new BorrowFailedResponse("Borrow failed.", invalidBookIds, lowStockBookIds, borrowedBookIds);
+        }
 
-        String bookUUID = book.getBookId();
-        BigDecimal price = book.getPrice();
-
-        if(borrowRecordsMapper.countBorrow(userUUID,"borrowed")>=10){
-            //同时借阅数量已达上限
+        //借阅数达上限
+        if(borrowRecordsMapper.countBorrow(userUUID,"borrowed") + bookIds.size() >10){
             return new Response("Reach borrow limit");
         }
+
         BigDecimal balance = userRepository.findByUuid(userUUID).getBalance();
         BigDecimal newBalance = balance.subtract(price);//计算扣款
         if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
             //余额不足
             return new LowBalanceResponse("insufficient balance", newBalance.negate());//返回需要补齐的金额
         }
-        //判断是否已经有该书的借出记录
-        if(checkBorrow(bookUUID, userUUID).isEmpty()){
+
+        LocalDate dueTime;
+        LocalDate borrowTime = LocalDate.now();
+        dueTime = borrowTime.plusDays(BORROW_DURATION);
+
+        for(String bId : bookIds){
+            Book book = bookMapper.findBookById(bId);
+            bookNames.add(book.getTitle());//记录书籍名字
             //书本库存-1
             //书本借阅次数+1
             book.setBorrowTimes(book.getBorrowTimes() + 1);
             book.setAvailableCopies(book.getAvailableCopies() - 1);
             bookMapper.updateBook(book);
             //在BorrowRecords中记录借出
-            LocalDate dueTime;
-            LocalDate borrowTime = LocalDate.now();
-            dueTime = borrowTime.plusDays(BORROW_DURATION);
             BorrowRecords borrowRecords = new BorrowRecords();
-            borrowRecords.setBookId(bookUUID);
+            borrowRecords.setBookId(bId);
             borrowRecords.setUuid(userUUID);
             borrowRecords.setBorrowDate(borrowTime);
             borrowRecords.setDueDate(dueTime);
             borrowRecords.setStatus("borrowed");
             borrowRecordsMapper.addBorrowRecord(borrowRecords);
+        }
             //更新当前用户的账户余额
             User user = userRepository.findByUuid(userUUID);
             user.setBalance(newBalance);
             userRepository.save(user);
             // 发送借阅成功邮件
             String subject = "eBook borrow system - Borrow notification";
-            String emailBody = buildBorrowEmailBody(user.getName(), book.getTitle(), price, "borrow");
+            String emailBody = buildBorrowEmailBody(user.getName(), bookNames, "borrow");
             boolean emailSent = emailService.sendHtmlEmail(user.getEmail(), subject, emailBody);
             if (!emailSent) {
                 log.error("Failed to send email to: {} ", user.getEmail());
             }
             log.info("Email sent to: {} ", user.getEmail());
             return new BorrowResponse("Borrow Successful", dueTime, newBalance);
-        }
-        else return new Response("The user already borrowed this book.");
-
     }
 
     @Override
@@ -117,9 +144,11 @@ public class BorrowServiceimpl implements BorrowService {
             borrowedRecord.setStatus("returned");
             borrowRecordsMapper.updateBorrowRecord(borrowedRecord);
             User user = userRepository.findByUuid(userUUID);
+            List<String> bookNames = new ArrayList<>();
+            bookNames.add(book.getTitle());
             // 发送还书成功邮件
             String subject = "eBook borrow system - Return notification";
-            String emailBody = buildBorrowEmailBody(user.getName(), book.getTitle(), book.getPrice(), "return");
+            String emailBody = buildBorrowEmailBody(user.getName(), bookNames, "return");
             boolean emailSent = emailService.sendHtmlEmail(user.getEmail(), subject, emailBody);
             if (!emailSent) {
                 log.error("Failed to send email to: {} ", user.getEmail());
@@ -154,10 +183,11 @@ public class BorrowServiceimpl implements BorrowService {
             User user = userRepository.findByUuid(userUUID);
             user.setBalance(newBalance);
             userRepository.save(user);
-
+            List<String> bookNames = new ArrayList<>();
+            bookNames.add(book.getTitle());
             // 发送续借成功邮件
             String subject = "eBook borrow system - Re-borrow notification";
-            String emailBody = buildBorrowEmailBody(user.getName(), book.getTitle(), price, "re-borrow");
+            String emailBody = buildBorrowEmailBody(user.getName(), bookNames, "re-borrow");
             boolean emailSent = emailService.sendHtmlEmail(user.getEmail(), subject, emailBody);
             if (!emailSent) {
                 log.error("Failed to send email to: {} ", user.getEmail());
@@ -255,17 +285,20 @@ public class BorrowServiceimpl implements BorrowService {
     /**
      * 构建借阅邮件正文
      */
-    private String buildBorrowEmailBody(String userName, String bookName, BigDecimal price, String function) {
-        return "<html><body>" +
-                "<h2>ebookloaningtool</h2>" +
-                "<p>Dear " + userName + "：</p>" +
-                "<p>Congratulations!</p>" +
-                "<p>You successfully "+ function + ": </p>" +
-                "<p>    Book: " + bookName + "</p>" +
-                "<p>    Price: " + price + "</p>" +
-                "<p>If you have a question, contact us.</p>" +
-                "<p>Thank you！</p>" +
-                "</body></html>";
+    private String buildBorrowEmailBody(String userName, List<String> bookNames, String function) {
+        StringBuilder htmlBody = new StringBuilder("<html><body>");
+        htmlBody.append("<h2>ebookloaningtool</h2>");
+        htmlBody.append("<p>Dear ").append(userName).append(":</p>");
+        htmlBody.append("<p>Congratulations!</p>");
+        htmlBody.append("<p>You successfully ").append(function).append(" the following books:</p>");
+
+        for (String bookName : bookNames) {
+            htmlBody.append("<p><i>  ").append(bookName).append("<i></p>");
+        }
+        htmlBody.append("<p>If you have a question, contact us.</p>");
+        htmlBody.append("<p>Thank you! </p>");
+        htmlBody.append("</body></html>");
+        return htmlBody.toString();
     }
 
     /**
