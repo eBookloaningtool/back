@@ -32,7 +32,7 @@ public class BorrowController {
         }
         else{
                 //借出书籍
-                return borrowService.recordBorrow(b.getBookId(), userID, b.getPrice());
+                return borrowService.recordBorrow(b, userID);
         }
     }
 
@@ -45,7 +45,7 @@ public class BorrowController {
         if (b == null) {
             return new Response("Book not exist.");
         }
-        else return borrowService.returnBook(b.getBookId(), userID);
+        else return borrowService.returnBook(b, userID);
     }
 
     @PostMapping("/renew")
@@ -57,7 +57,7 @@ public class BorrowController {
         if (b == null) {
             return new Response("Book not exist.");
         }
-        else return borrowService.renewBook(b.getBookId(), userID, b.getPrice());
+        else return borrowService.renewBook(b, userID);
     }
 
     @PostMapping("/borrowlist")

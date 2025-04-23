@@ -3,10 +3,7 @@ package one.wcy.ebookloaningtool.llf.mapper;
 import one.wcy.ebookloaningtool.llf.pojo.BorrowHistory;
 import one.wcy.ebookloaningtool.llf.pojo.BorrowList;
 import one.wcy.ebookloaningtool.llf.pojo.BorrowRecords;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -17,15 +14,15 @@ public interface BorrowRecordsMapper {
     List<BorrowRecords> findByBookUUIDAndUserUUIDAndStatus(String bookUUID, String userUUID, String status);
 
     //根据status查找记录，可能存在多条，用List存储
-    @Select("select * from BorrowRecords where status = #{status}")
+    @Select("select * from BorrowRecords where status = #{status} ORDER BY borrowDate")
     List<BorrowRecords> findByStatus(String status);
 
     //根据用户id和status查找借阅记录
-    @Select("select borrowId,bookId,borrowDate,dueDate from BorrowRecords where uuid = #{userUUID} and status = #{status}")
+    @Select("select borrowId,bookId,borrowDate,dueDate from BorrowRecords where uuid = #{userUUID} and status = #{status} ORDER BY borrowDate")
     List<BorrowList> findBorrowList(String userUUID, String status);
 
     //根据用户id查找借阅历史
-    @Select("select borrowId,bookId,borrowDate,dueDate, returnDate, status from BorrowRecords where uuid = #{userUUID}")
+    @Select("select borrowId,bookId,borrowDate,dueDate, returnDate, status from BorrowRecords where uuid = #{userUUID} ORDER BY borrowDate")
     List<BorrowHistory> findBorrowHistory(String userUUID);
 
     //根据提供的BorrowRecords实体插入
@@ -43,6 +40,10 @@ public interface BorrowRecordsMapper {
             "status = #{status} " +
             "Where borrowId = #{borrowId}")
     int updateBorrowRecord(BorrowRecords borrowRecords);
+
+    @Select("SELECT COUNT(*) FROM BorrowRecords " +
+            "WHERE uuid = #{userId} and status = #{status}")
+    int countBorrow(String userId, String status);
 
 
 }
