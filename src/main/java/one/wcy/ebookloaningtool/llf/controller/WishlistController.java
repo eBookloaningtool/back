@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/wishlist")
-public class wishlistController {
+public class WishlistController {
 
     @Autowired
     private BorrowService borrowService;

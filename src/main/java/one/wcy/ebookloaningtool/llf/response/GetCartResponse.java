@@ -8,9 +8,9 @@ import java.util.List;
 
 @Getter
 @Setter
-public class getCartResponse extends Response {
+public class GetCartResponse extends Response {
     private List<String> bookId;
-    public getCartResponse(String state, List<String> bookId) {
+    public GetCartResponse(String state, List<String> bookId) {
         super(state);
         this.bookId = bookId;
     }
