@@ -16,6 +16,10 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         //登录接口、注册接口、忘记密码接口和电子书管理不拦截
         //评论系统中获取书籍评论、获取评论信息不拦截
-        registry.addInterceptor(logininterceptor).excludePathPatterns("/api/users/register", "/api/auth/login", "/api/auth/forget", "/api/books/get", "/api/books/popular", "/api/books/search", "/api/reviews/book", "/api/reviews/content");
+        //获取类别接口不拦截
+        registry.addInterceptor(logininterceptor)
+                .excludePathPatterns("/api/users/register", "/api/auth/login", "/api/auth/forget",
+                        "/api/books/get", "/api/books/popular", "/api/books/search",
+                        "/api/reviews/book", "/api/reviews/content", "/api/categories/**");
     }
 }

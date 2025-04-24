@@ -2,7 +2,7 @@ package one.wcy.ebookloaningtool.llf.service.impl;
 
 import one.wcy.ebookloaningtool.llf.mapper.WishlistsMapper;
 import one.wcy.ebookloaningtool.llf.pojo.Book;
-import one.wcy.ebookloaningtool.llf.response.getWishlistResponse;
+import one.wcy.ebookloaningtool.llf.response.GetWishlistResponse;
 import one.wcy.ebookloaningtool.llf.service.BorrowService;
 import one.wcy.ebookloaningtool.llf.service.WishlistService;
 import one.wcy.ebookloaningtool.utils.Response;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class wishlistServiceimpl implements WishlistService {
+public class WishlistServiceimpl implements WishlistService {
 
     @Autowired
     private WishlistsMapper wishlistMapper;
@@ -48,6 +48,6 @@ public class wishlistServiceimpl implements WishlistService {
     @Override
     public Response getWishlist(String userID) {
         List<String> wishlist = wishlistMapper.findListByUid(userID);
-        return new getWishlistResponse("bookId", wishlist);
+        return new GetWishlistResponse("bookId", wishlist);
     }
 }

@@ -2,7 +2,7 @@ package one.wcy.ebookloaningtool.llf.service.impl;
 
 import one.wcy.ebookloaningtool.llf.mapper.CartMapper;
 import one.wcy.ebookloaningtool.llf.pojo.Book;
-import one.wcy.ebookloaningtool.llf.response.getCartResponse;
+import one.wcy.ebookloaningtool.llf.response.GetCartResponse;
 import one.wcy.ebookloaningtool.llf.service.BorrowService;
 import one.wcy.ebookloaningtool.llf.service.CartService;
 import one.wcy.ebookloaningtool.utils.Response;
@@ -52,6 +52,6 @@ public class CartServiceimpl implements CartService {
     @Override
     public Response getCart(String userID) {
         List<String> cart = cartMapper.findListByUid(userID);
-        return new getCartResponse("bookId", cart);
+        return new GetCartResponse("bookId", cart);
     }
 }

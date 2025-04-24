@@ -8,9 +8,9 @@ import java.util.List;
 
 @Getter
 @Setter
-public class getWishlistResponse extends Response {
+public class GetWishlistResponse extends Response {
     private List<String> bookId;
-    public getWishlistResponse(String state, List<String> bookId) {
+    public GetWishlistResponse(String state, List<String> bookId) {
         super(state);
         this.bookId = bookId;
     }
