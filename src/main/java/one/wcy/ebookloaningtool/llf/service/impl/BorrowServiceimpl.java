@@ -293,7 +293,7 @@ public class BorrowServiceimpl implements BorrowService {
         htmlBody.append("<p>You successfully ").append(function).append(" the following books:</p>");
 
         for (String bookName : bookNames) {
-            htmlBody.append("<p><i>  ").append(bookName).append("<i></p>");
+            htmlBody.append("<p><i>  ").append(bookName).append("</i></p>");
         }
         htmlBody.append("<p>If you have a question, contact us.</p>");
         htmlBody.append("<p>Thank you! </p>");
