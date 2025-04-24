@@ -45,7 +45,7 @@ public class ForgetPasswordService {
         userRepository.save(user);
 
         // 发送包含新密码的邮件
-        String subject = "电子书借阅系统 - 密码重置";
+        String subject = "eBook borrow system - Reset password";
         String body = buildPasswordResetEmailBody(user.getName(), newPassword);
         
         boolean emailSent = emailService.sendHtmlEmail(email, subject, body);
@@ -72,14 +72,13 @@ public class ForgetPasswordService {
      */
     private String buildPasswordResetEmailBody(String userName, String newPassword) {
         return "<html><body>" +
-                "<h2>电子书借阅系统密码重置</h2>" +
-                "<p>尊敬的 " + userName + "：</p>" +
-                "<p>您的账户密码已被重置。您的新密码是：</p>" +
+                "<h2>ebookloaningtool</h2>" +
+                "<p>Dear " + userName + "：</p>" +
+                "<p>Your password already reset, your temporary password is:</p>" +
                 "<p style='font-weight: bold; font-size: 16px;'>" + newPassword + "</p>" +
-                "<p>请使用此临时密码登录，并尽快在个人设置中修改为您自己的密码。</p>" +
-                "<p>如果您没有请求重置密码，请立即联系管理员。</p>" +
-                "<p>此致</p>" +
-                "<p>电子书借阅系统团队</p>" +
+                "<p>Please use this temporary password to log in and change it as soon as possible.</p>" +
+                "<p>If you have a question, contact us.</p>" +
+                "<p>Thank you!</p>" +
                 "</body></html>";
     }
 } 

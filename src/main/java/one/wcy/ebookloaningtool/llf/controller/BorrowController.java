@@ -4,11 +4,14 @@ package one.wcy.ebookloaningtool.llf.controller;
 
 import io.jsonwebtoken.Claims;
 import one.wcy.ebookloaningtool.llf.pojo.Book;
+import one.wcy.ebookloaningtool.llf.pojo.BooksRequest;
 import one.wcy.ebookloaningtool.llf.service.BorrowService;
 import one.wcy.ebookloaningtool.utils.Response;
 import one.wcy.ebookloaningtool.utils.ThreadLocalUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/borrow")
@@ -17,23 +20,12 @@ public class BorrowController {
     @Autowired
     private BorrowService borrowService;
     @PostMapping("/borrow")
-    public Response borrow(@RequestBody Book book) {
+    public Response borrow(@RequestBody BooksRequest books) {
         //从令牌中获取用户uuid
         Claims claims = ThreadLocalUtil.get();
         String userID = claims.get("uuid").toString();
-        Book b = borrowService.findBookById(book.getBookId());
-        if (b == null) {
-            //没找到对应书籍
-            return new Response("Book not exist.");
-        }
-        else if (b.getAvailableCopies() < 1) {
-                //库存不足
-                return new Response("Stock is too low.");
-        }
-        else{
-                //借出书籍
-                return borrowService.recordBorrow(b.getBookId(), userID);
-        }
+        List<String> bs = books.getBookId();
+        return borrowService.recordBorrow(bs, userID);
     }
 
     @PostMapping("/return")
@@ -45,7 +37,7 @@ public class BorrowController {
         if (b == null) {
             return new Response("Book not exist.");
         }
-        else return borrowService.returnBook(b.getBookId(), userID);
+        else return borrowService.returnBook(b, userID);
     }
 
     @PostMapping("/renew")
@@ -57,6 +49,22 @@ public class BorrowController {
         if (b == null) {
             return new Response("Book not exist.");
         }
-        else return borrowService.renewBook(b.getBookId(), userID);
+        else return borrowService.renewBook(b, userID);
+    }
+
+    @PostMapping("/borrowlist")
+    public Response borrowList() {
+        //从令牌中获取用户uuid
+        Claims claims = ThreadLocalUtil.get();
+        String userID = claims.get("uuid").toString();
+        return borrowService.getBorrowList(userID);
+    }
+
+    @PostMapping("/history")
+    public Response history() {
+        //从令牌中获取用户uuid
+        Claims claims = ThreadLocalUtil.get();
+        String userID = claims.get("uuid").toString();
+        return borrowService.getBorrowHistory(userID);
     }
 }

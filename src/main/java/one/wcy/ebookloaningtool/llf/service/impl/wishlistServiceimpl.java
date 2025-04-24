@@ -35,15 +35,13 @@ public class wishlistServiceimpl implements WishlistService {
     }
 
     @Override
-    public Response deleteBook(List<String> bookIds, String userID) {
-        for (String bookId: bookIds){
+    public Response deleteBook(String bookId, String userID) {
             Book b = borrowService.findBookById(bookId);
             //没有该书
-            if(b == null) return new Response("Some books not exist.");
+            if(b == null) return new Response("The book does not exist.");
             if (wishlistMapper.findListByUidAndBookId(userID, bookId) == null)
-                return new Response("Some books does not exist in cart.");
-        }
-        for (String bookId: bookIds) wishlistMapper.deleteWishlists(userID,bookId);
+                return new Response("The book does not exist in wishlist.");
+        wishlistMapper.deleteWishlists(userID,bookId);
         return new Response("success");
     }
 
