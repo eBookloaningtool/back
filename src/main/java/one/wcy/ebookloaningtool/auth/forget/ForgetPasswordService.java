@@ -72,7 +72,7 @@ public class ForgetPasswordService {
      */
     private String buildPasswordResetEmailBody(String userName, String newPassword) {
         return "<html><body>" +
-                "<h2>ebookloaningtool</h2>" +
+                "<h2>BorrowBee</h2>" +
                 "<p>Dear " + userName + "：</p>" +
                 "<p>Your password already reset, your temporary password is:</p>" +
                 "<p style='font-weight: bold; font-size: 16px;'>" + newPassword + "</p>" +
