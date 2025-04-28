@@ -3,6 +3,7 @@ package one.wcy.ebookloaningtool.llf.config;
 import one.wcy.ebookloaningtool.llf.interceptors.LoginInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -21,5 +22,16 @@ public class WebConfig implements WebMvcConfigurer {
                 .excludePathPatterns("/api/users/register", "/api/auth/login", "/api/auth/forget",
                         "/api/books/get", "/api/books/popular", "/api/books/search",
                         "/api/reviews/book", "/api/reviews/content", "/api/categories/**");
+    }
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins("https://borrowbee.wcy.one", "http://localhost:5173", "http://localhost:5175", "http://localhost:8000")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers")
+                .exposedHeaders("Authorization")
+                .allowCredentials(true)
+                .maxAge(3600);
     }
 }
