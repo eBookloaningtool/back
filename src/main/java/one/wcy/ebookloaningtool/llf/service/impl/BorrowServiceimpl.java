@@ -287,7 +287,7 @@ public class BorrowServiceimpl implements BorrowService {
      */
     private String buildBorrowEmailBody(String userName, List<String> bookNames, String function) {
         StringBuilder htmlBody = new StringBuilder("<html><body>");
-        htmlBody.append("<h2>ebookloaningtool</h2>");
+        htmlBody.append("<h2>BorrowBee</h2>");
         htmlBody.append("<p>Dear ").append(userName).append(":</p>");
         htmlBody.append("<p>Congratulations!</p>");
         htmlBody.append("<p>You successfully ").append(function).append(" the following books:</p>");
@@ -306,7 +306,7 @@ public class BorrowServiceimpl implements BorrowService {
      */
     private String buildAutoReturnEmailBody(String userName, String bookName, String function, LocalDate returnDate) {
         return "<html><body>" +
-                "<h2>ebookloaningtool</h2>" +
+                "<h2>BorrowBee</h2>" +
                 "<p>Dear " + userName + "：</p>" +
                 "<p>Notice</p>" +
                 "<p>Your borrowed book: " + bookName + "</p>" +
