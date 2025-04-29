@@ -52,6 +52,6 @@ public class CartServiceimpl implements CartService {
     @Override
     public Response getCart(String userID) {
         List<String> cart = cartMapper.findListByUid(userID);
-        return new GetCartResponse("bookId", cart);
+        return new GetCartResponse("success", cart);
     }
 }

@@ -48,6 +48,6 @@ public class WishlistServiceimpl implements WishlistService {
     @Override
     public Response getWishlist(String userID) {
         List<String> wishlist = wishlistMapper.findListByUid(userID);
-        return new GetWishlistResponse("bookId", wishlist);
+        return new GetWishlistResponse("success", wishlist);
     }
 }
