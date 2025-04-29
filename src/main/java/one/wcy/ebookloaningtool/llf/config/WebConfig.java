@@ -27,9 +27,9 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("https://borrowbee.wcy.one", "http://localhost:5173", "http://localhost:5175", "http://localhost:8000")
+                .allowedOrigins("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers")
+                .allowedHeaders("*")
                 .exposedHeaders("Authorization")
                 .allowCredentials(true)
                 .maxAge(3600);
