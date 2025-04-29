@@ -29,9 +29,9 @@ public interface BookMapper {
             "Where bookId = #{bookId}")
     int updateBook(Book book);
 
-    //获取借阅次数最多的前5本书
-    @Select("SELECT bookId FROM Book ORDER BY borrowTimes DESC LIMIT 5")
-    List<String> findTop5PopularBooks();
+    //按借阅次数降序获取热门书籍
+    @Select("SELECT bookId FROM Book ORDER BY borrowTimes DESC")
+    List<String> findTopPopularBooks();
 
     //根据标题、作者、类别搜索电子书
     @Select("<script>" +
