@@ -15,6 +15,6 @@ public class PopularBookController {
 
     @GetMapping("/popular")
     public PopularBooksResponse getPopularBooks() {
-        return new PopularBooksResponse(bookMapper.findTop5PopularBooks());
+        return new PopularBooksResponse(bookMapper.findTopPopularBooks());
     }
 } 
