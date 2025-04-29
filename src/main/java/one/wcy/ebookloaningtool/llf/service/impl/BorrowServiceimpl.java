@@ -125,7 +125,7 @@ public class BorrowServiceimpl implements BorrowService {
                 log.error("Failed to send email to: {} ", user.getEmail());
             }
             log.info("Email sent to: {} ", user.getEmail());
-            return new BorrowResponse("Borrow Successful", dueTime, newBalance);
+            return new BorrowResponse("success", dueTime, newBalance);
     }
 
     @Override
@@ -154,7 +154,7 @@ public class BorrowServiceimpl implements BorrowService {
                 log.error("Failed to send email to: {} ", user.getEmail());
             }
             log.info("Email sent to: {} ", user.getEmail());
-            return new Response("Return Successful");
+            return new Response("success");
         }else return new Response("The user do not borrow this book.");
     }
 
@@ -193,7 +193,7 @@ public class BorrowServiceimpl implements BorrowService {
                 log.error("Failed to send email to: {} ", user.getEmail());
             }
             log.info("Email sent to: {} ", user.getEmail());
-            return new RenewResponse("Renew Successful",newDueTime, newBalance);
+            return new RenewResponse("success",newDueTime, newBalance);
         }else return new Response("The user do not borrow this book.");
     }
 
