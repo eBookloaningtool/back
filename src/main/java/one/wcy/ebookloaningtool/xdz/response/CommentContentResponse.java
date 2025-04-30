@@ -10,12 +10,14 @@ import java.math.BigDecimal;
 @Setter
 public class CommentContentResponse extends Response {
     private String UUID;
+    private String username;
     private BigDecimal rating;
     private String content;
 
-    public CommentContentResponse(String state, String UUID, BigDecimal rating, String content) {
+    public CommentContentResponse(String state, String UUID, String username, BigDecimal rating, String content) {
             super(state);
             this.UUID = UUID;
+            this.username = username;
             this.rating = rating;
             this.content = content;
     }

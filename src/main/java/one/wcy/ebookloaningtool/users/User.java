@@ -19,6 +19,8 @@ public class User {
     private String email;
     private String name;
     private String password;
+    //账号状态，活动-TRUE   注销-FALSE
+    private boolean active;
 
     
     private BigDecimal balance; // 用户余额
@@ -29,6 +31,7 @@ public class User {
     @PrePersist
     protected void onCreate() {
         createdat = LocalDate.now();
+        active = true;
     }
 
     public void setEncodedPassword(String encodedPassword) {
