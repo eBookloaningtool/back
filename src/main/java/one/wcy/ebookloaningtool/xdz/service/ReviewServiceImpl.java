@@ -4,6 +4,8 @@ import io.jsonwebtoken.Claims;
 import one.wcy.ebookloaningtool.llf.mapper.BookMapper;
 import one.wcy.ebookloaningtool.llf.pojo.Book;
 import one.wcy.ebookloaningtool.llf.service.BorrowService;
+import one.wcy.ebookloaningtool.users.User;
+import one.wcy.ebookloaningtool.users.UserRepository;
 import one.wcy.ebookloaningtool.utils.Response;
 import one.wcy.ebookloaningtool.utils.ThreadLocalUtil;
 import one.wcy.ebookloaningtool.xdz.mapper.CommentsMapper;
@@ -31,6 +33,13 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Autowired
     private BookMapper bookMapper;
+
+    @Autowired
+    private final UserRepository userRepository;
+
+    public ReviewServiceImpl(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @Override
     public Response addReview(AddReviewRequest request) {
@@ -125,11 +134,14 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         Comment comment = commentsMapper.selectById(commentId);
+        User user = userRepository.findById(comment.getUuid())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        String userName = user.getName();
         if (comment == null) {
             return new Response("Comment not found");
         }
 
-        return new CommentContentResponse("success", comment.getUuid(),
+        return new CommentContentResponse("success", comment.getUuid(), userName,
                 comment.getRating(), comment.getContent());
     }
 
