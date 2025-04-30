@@ -1,5 +1,6 @@
 package one.wcy.ebookloaningtool.llf.service.impl;
 
+import one.wcy.ebookloaningtool.llf.mapper.BorrowRecordsMapper;
 import one.wcy.ebookloaningtool.llf.mapper.WishlistsMapper;
 import one.wcy.ebookloaningtool.llf.pojo.Book;
 import one.wcy.ebookloaningtool.llf.response.GetWishlistResponse;
@@ -16,10 +17,13 @@ public class WishlistServiceimpl implements WishlistService {
     @Autowired
     private WishlistsMapper wishlistMapper;
     @Autowired
+    private BorrowRecordsMapper borrowRecordsMapper;
+    @Autowired
     private BorrowService borrowService;
     @Override
     public Response addBook(String bookId, String userID) {
-        if (wishlistMapper.findListByUidAndBookId(userID, bookId) != null) {
+
+        if (wishlistMapper.findListByUidAndBookId(userID, bookId) != null || borrowRecordsMapper.findByBookUUIDAndUserUUIDAndStatus(bookId,userID,"borrowed").size() > 0) {
             //书已在愿望清单中
             return new Response("Book already exist.");
         }

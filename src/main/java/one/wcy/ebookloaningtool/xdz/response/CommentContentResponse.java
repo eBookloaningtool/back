@@ -9,14 +9,14 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 public class CommentContentResponse extends Response {
-    private String UUID;
+    private String uuid;
     private String username;
     private BigDecimal rating;
     private String content;
 
     public CommentContentResponse(String state, String UUID, String username, BigDecimal rating, String content) {
             super(state);
-            this.UUID = UUID;
+            this.uuid = UUID;
             this.username = username;
             this.rating = rating;
             this.content = content;
