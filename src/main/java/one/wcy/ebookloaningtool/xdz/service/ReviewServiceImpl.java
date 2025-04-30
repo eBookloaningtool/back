@@ -134,6 +134,7 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         Comment comment = commentsMapper.selectById(commentId);
+        String bookId = comment.getBookId();
         User user = userRepository.findById(comment.getUuid())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         String userName = user.getName();
@@ -141,7 +142,7 @@ public class ReviewServiceImpl implements ReviewService {
             return new Response("Comment not found");
         }
 
-        return new CommentContentResponse("success", comment.getUuid(), userName,
+        return new CommentContentResponse("success", comment.getUuid(), bookId, userName,
                 comment.getRating(), comment.getContent());
     }
 
