@@ -1,5 +1,6 @@
 package one.wcy.ebookloaningtool.llf.service.impl;
 
+import one.wcy.ebookloaningtool.llf.mapper.BorrowRecordsMapper;
 import one.wcy.ebookloaningtool.llf.mapper.CartMapper;
 import one.wcy.ebookloaningtool.llf.pojo.Book;
 import one.wcy.ebookloaningtool.llf.response.GetCartResponse;
@@ -18,10 +19,12 @@ public class CartServiceimpl implements CartService {
     private CartMapper cartMapper;
     @Autowired
     private BorrowService borrowService;
+    @Autowired
+    private BorrowRecordsMapper borrowRecordsMapper;
 
     @Override
     public Response addBook(String bookId, String userID) {
-        if (cartMapper.findListByUidAndBookId(userID, bookId) != null) {
+        if (cartMapper.findListByUidAndBookId(userID, bookId) != null || borrowRecordsMapper.findByBookUUIDAndUserUUIDAndStatus(bookId,userID,"borrowed").size() > 0) {
             //书已在购物车中
             return new Response("Book already exist.");
         }
