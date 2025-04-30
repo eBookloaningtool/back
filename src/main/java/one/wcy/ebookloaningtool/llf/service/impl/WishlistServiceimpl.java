@@ -23,11 +23,12 @@ public class WishlistServiceimpl implements WishlistService {
     @Override
     public Response addBook(String bookId, String userID) {
 
-        if (wishlistMapper.findListByUidAndBookId(userID, bookId) != null || borrowRecordsMapper.findByBookUUIDAndUserUUIDAndStatus(bookId,userID,"borrowed").size() > 0) {
+        if (wishlistMapper.findListByUidAndBookId(userID, bookId) != null) {
             //书已在愿望清单中
             return new Response("Book already exist.");
-        }
-        else{
+        } else if (!borrowRecordsMapper.findByBookUUIDAndUserUUIDAndStatus(bookId, userID, "borrowed").isEmpty()) {
+            return new Response("Book already borrowed.");
+        } else{
             //将书添加到愿望清单
             try {
                 wishlistMapper.addWishlists(userID,bookId);

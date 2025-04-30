@@ -24,9 +24,12 @@ public class CartServiceimpl implements CartService {
 
     @Override
     public Response addBook(String bookId, String userID) {
-        if (cartMapper.findListByUidAndBookId(userID, bookId) != null || borrowRecordsMapper.findByBookUUIDAndUserUUIDAndStatus(bookId,userID,"borrowed").size() > 0) {
+        if (cartMapper.findListByUidAndBookId(userID, bookId) != null) {
             //书已在购物车中
             return new Response("Book already exist.");
+        }
+        else if (!borrowRecordsMapper.findByBookUUIDAndUserUUIDAndStatus(bookId, userID, "borrowed").isEmpty()) {
+            return new Response("Book already borrowed.");
         }
         else{
             //将书添加到购物车
