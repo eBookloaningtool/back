@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +32,7 @@ public class ForgetPasswordService {
     public boolean handleForgetPassword(String email) {
         // 验证邮箱是否存在
         User user = userRepository.findByEmail(email);
+        AtomicReference<Boolean> flag = new AtomicReference<>(false);
         if (user == null) {
             log.warn("Password reset requested for non-existent email: {}", email);
             // 为了安全考虑，我们依然返回true，不告诉攻击者该邮箱是否存在
@@ -43,19 +46,25 @@ public class ForgetPasswordService {
         // 更新用户密码
         user.setEncodedPassword(encodedPassword);
         userRepository.save(user);
+        // 异步发送邮件
+        CompletableFuture.runAsync(() -> {
+            try {
+                // 发送包含新密码的邮件
+                String subject = "eBook borrow system - Reset password";
+                String body = buildPasswordResetEmailBody(user.getName(), newPassword);
 
-        // 发送包含新密码的邮件
-        String subject = "eBook borrow system - Reset password";
-        String body = buildPasswordResetEmailBody(user.getName(), newPassword);
-        
-        boolean emailSent = emailService.sendHtmlEmail(email, subject, body);
-        if (!emailSent) {
-            log.error("Failed to send password reset email to: {}", email);
-            return false;
-        }
-        
-        log.info("Password reset email sent to: {}", email);
-        return true;
+                boolean emailSent = emailService.sendHtmlEmail(email, subject, body);
+                if (!emailSent) {
+                    log.error("Failed to send password reset email to: {}", email);
+                    flag.set(false);
+                }
+                log.info("Password reset email sent to: {}", email);
+                flag.set(true);
+            } catch (Exception e) {
+                log.error("Failed to send password reset email to: {}", email);
+            }
+        });
+        return flag.get();
     }
 
     /**
