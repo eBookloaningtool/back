@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @Slf4j
@@ -118,13 +119,27 @@ public class BorrowServiceimpl implements BorrowService {
             user.setBalance(newBalance);
             userRepository.save(user);
             // 发送借阅成功邮件
-            String subject = "eBook borrow system - Borrow notification";
-            String emailBody = buildBorrowEmailBody(user.getName(), bookNames, "borrow");
-            boolean emailSent = emailService.sendHtmlEmail(user.getEmail(), subject, emailBody);
-            if (!emailSent) {
-                log.error("Failed to send email to: {} ", user.getEmail());
+        // 异步发送邮件
+        CompletableFuture.runAsync(() -> {
+            try {
+                String subject = "eBook borrow system - Borrow notification";
+                String emailBody = buildBorrowEmailBody(user.getName(), bookNames, "borrow");
+                boolean emailSent = emailService.sendHtmlEmail(user.getEmail(), subject, emailBody);
+                if (!emailSent) {
+                    log.error("Failed to send email to: {} ", user.getEmail());
+                }
+                log.info("Email sent to: {} ", user.getEmail());
+            } catch (Exception e) {
+                log.error("Failed to send email to: {} ", user.getEmail(), e);
             }
-            log.info("Email sent to: {} ", user.getEmail());
+        });
+//            String subject = "eBook borrow system - Borrow notification";
+//            String emailBody = buildBorrowEmailBody(user.getName(), bookNames, "borrow");
+//            boolean emailSent = emailService.sendHtmlEmail(user.getEmail(), subject, emailBody);
+//            if (!emailSent) {
+//                log.error("Failed to send email to: {} ", user.getEmail());
+//            }
+//            log.info("Email sent to: {} ", user.getEmail());
             return new BorrowResponse("success", dueTime, newBalance);
     }
 
@@ -146,14 +161,20 @@ public class BorrowServiceimpl implements BorrowService {
             User user = userRepository.findByUuid(userUUID);
             List<String> bookNames = new ArrayList<>();
             bookNames.add(book.getTitle());
-            // 发送还书成功邮件
-            String subject = "eBook borrow system - Return notification";
-            String emailBody = buildBorrowEmailBody(user.getName(), bookNames, "return");
-            boolean emailSent = emailService.sendHtmlEmail(user.getEmail(), subject, emailBody);
-            if (!emailSent) {
-                log.error("Failed to send email to: {} ", user.getEmail());
-            }
-            log.info("Email sent to: {} ", user.getEmail());
+            // 异步发送邮件
+            CompletableFuture.runAsync(() -> {
+                        try {
+                            String subject = "eBook borrow system - Return notification";
+                            String emailBody = buildBorrowEmailBody(user.getName(), bookNames, "return");
+                            boolean emailSent = emailService.sendHtmlEmail(user.getEmail(), subject, emailBody);
+                            if (!emailSent) {
+                                log.error("Failed to send email to: {} ", user.getEmail());
+                            }
+                            log.info("Email sent to: {} ", user.getEmail());
+                        } catch (Exception e) {
+                            log.error("Failed to send email to: {} ", user.getEmail(), e);
+                        }
+                    });
             return new Response("success");
         }else return new Response("The user do not borrow this book.");
     }
