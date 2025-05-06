@@ -143,7 +143,7 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         return new CommentContentResponse("success", comment.getUuid(), bookId, userName,
-                comment.getRating(), comment.getContent());
+                comment.getRating(), comment.getContent(), comment.getCreatedAt().toLocalDate());
     }
 
     @Override
