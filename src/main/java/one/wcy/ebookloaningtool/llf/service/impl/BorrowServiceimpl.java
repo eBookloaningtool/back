@@ -3,6 +3,8 @@ package one.wcy.ebookloaningtool.llf.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import one.wcy.ebookloaningtool.llf.mapper.BookMapper;
 import one.wcy.ebookloaningtool.llf.mapper.BorrowRecordsMapper;
+import one.wcy.ebookloaningtool.llf.mapper.CartMapper;
+import one.wcy.ebookloaningtool.llf.mapper.WishlistsMapper;
 import one.wcy.ebookloaningtool.llf.pojo.Book;
 import one.wcy.ebookloaningtool.llf.pojo.BorrowHistory;
 import one.wcy.ebookloaningtool.llf.pojo.BorrowList;
@@ -32,6 +34,10 @@ public class BorrowServiceimpl implements BorrowService {
     private BookMapper bookMapper;
     @Autowired
     private BorrowRecordsMapper borrowRecordsMapper;
+    @Autowired
+    private WishlistsMapper wishlistsMapper;
+    @Autowired
+    private CartMapper cartMapper;
     @Autowired
     private EmailService emailService;
 
@@ -105,6 +111,10 @@ public class BorrowServiceimpl implements BorrowService {
             book.setBorrowTimes(book.getBorrowTimes() + 1);
             book.setAvailableCopies(book.getAvailableCopies() - 1);
             bookMapper.updateBook(book);
+            //如果书在愿望清单中存在，从愿望清单中移除
+            wishlistsMapper.deleteWishlists(userUUID, bId);
+            //从购物车中移除
+            cartMapper.deleteCart(userUUID, bId);
             //在BorrowRecords中记录借出
             BorrowRecords borrowRecords = new BorrowRecords();
             borrowRecords.setBookId(bId);
