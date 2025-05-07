@@ -1,3 +1,7 @@
+/**
+ * Controller class handling user authentication and login operations.
+ * Provides endpoints for user login and token generation.
+ */
 package one.wcy.ebookloaningtool.auth.login;
 
 import one.wcy.ebookloaningtool.utils.*;
@@ -14,6 +18,12 @@ public class LoginController {
     private final PasswordEncoderService passwordEncoderService;
     private final JwtTokenService jwtTokenService;
 
+    /**
+     * Constructor for LoginController with dependency injection.
+     * @param userRepository Repository for user data access
+     * @param passwordEncoderService Service for password encoding and verification
+     * @param jwtTokenService Service for JWT token generation and management
+     */
     public LoginController(UserRepository userRepository, 
                           PasswordEncoderService passwordEncoderService,
                           JwtTokenService jwtTokenService) {
@@ -22,6 +32,12 @@ public class LoginController {
         this.jwtTokenService = jwtTokenService;
     }
 
+    /**
+     * Handles user login requests.
+     * Validates user credentials and generates JWT token upon successful authentication.
+     * @param loginForm Login credentials containing email and password
+     * @return Response object containing authentication result and token if successful
+     */
     @PostMapping("/api/auth/login")
     public Response login(@RequestBody LoginForm loginForm) {
         User user = userRepository.findByEmail(loginForm.getEmail());

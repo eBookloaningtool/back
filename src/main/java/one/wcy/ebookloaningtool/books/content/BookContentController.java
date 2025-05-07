@@ -19,7 +19,7 @@ public class BookContentController {
 
     @PostMapping("/content")
     public ResponseEntity<BookContentResponse> getBookContent(@RequestBody BookContentRequest request) {
-        //从令牌中获取用户uuid
+        //get user uuid from token
         Claims claims = ThreadLocalUtil.get();
         String userID = claims.get("uuid").toString();
         

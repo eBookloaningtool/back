@@ -1,3 +1,8 @@
+/**
+ * Service class handling password reset operations.
+ * Manages the process of resetting user passwords and sending reset instructions via email.
+ * Implements secure password generation and asynchronous email notification.
+ */
 package one.wcy.ebookloaningtool.auth.forget;
 
 import lombok.RequiredArgsConstructor;
@@ -18,38 +23,55 @@ import java.util.concurrent.atomic.AtomicReference;
 @Slf4j
 public class ForgetPasswordService {
 
+    /**
+     * Repository for user data access
+     */
     private final UserRepository userRepository;
+
+    /**
+     * Service for sending email notifications
+     */
     private final EmailService emailService;
+
+    /**
+     * Service for password encoding and verification
+     */
     private final PasswordEncoderService passwordEncoderService;
+
+    /**
+     * Secure random number generator for password generation
+     */
     private static final SecureRandom secureRandom = new SecureRandom();
 
     /**
-     * 处理忘记密码请求
-     * 
-     * @param email 用户邮箱
-     * @return 是否成功发送重置邮件
+     * Handles the password reset process for a user.
+     * Generates a new random password, updates the user's password,
+     * and sends an email with the new password.
+     *
+     * @param email Email address of the user requesting password reset
+     * @return true if the process was initiated successfully
      */
     public boolean handleForgetPassword(String email) {
-        // 验证邮箱是否存在
+        // Verify if email exists
         User user = userRepository.findByEmail(email);
         AtomicReference<Boolean> flag = new AtomicReference<>(false);
         if (user == null) {
             log.warn("Password reset requested for non-existent email: {}", email);
-            // 为了安全考虑，我们依然返回true，不告诉攻击者该邮箱是否存在
+            // Return true for security reasons, not revealing if email exists
             return true;
         }
 
-        // 生成随机密码
+        // Generate random password
         String newPassword = generateRandomPassword();
         String encodedPassword = passwordEncoderService.encodePassword(newPassword);
         
-        // 更新用户密码
+        // Update user password
         user.setEncodedPassword(encodedPassword);
         userRepository.save(user);
-        // 异步发送邮件
+        // Send email asynchronously
         CompletableFuture.runAsync(() -> {
             try {
-                // 发送包含新密码的邮件
+                // Send email with new password
                 String subject = "eBook borrow system - Reset password";
                 String body = buildPasswordResetEmailBody(user.getName(), newPassword);
 
@@ -68,7 +90,10 @@ public class ForgetPasswordService {
     }
 
     /**
-     * 生成随机密码
+     * Generates a secure random password.
+     * Uses SecureRandom to generate 12 random bytes and encodes them in Base64.
+     *
+     * @return A secure random password string
      */
     private String generateRandomPassword() {
         byte[] randomBytes = new byte[12];
@@ -77,7 +102,12 @@ public class ForgetPasswordService {
     }
 
     /**
-     * 构建密码重置邮件正文
+     * Builds the HTML email body for password reset notification.
+     * Creates a formatted HTML message containing the new password and instructions.
+     *
+     * @param userName Name of the user
+     * @param newPassword The newly generated password
+     * @return HTML formatted email body
      */
     private String buildPasswordResetEmailBody(String userName, String newPassword) {
         return "<html><body>" +

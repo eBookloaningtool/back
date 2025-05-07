@@ -1,3 +1,7 @@
+/**
+ * Controller class for handling user registration requests.
+ * Provides endpoints for creating new user accounts with initial settings.
+ */
 package one.wcy.ebookloaningtool.users.register;
 
 import one.wcy.ebookloaningtool.security.PasswordEncoderService;
@@ -12,32 +16,56 @@ import java.math.BigDecimal;
 @RestController
 public class UserRegisterController {
 
+    /**
+     * Repository for user data access
+     */
     private final UserRepository userRepository;
-    private final PasswordEncoderService passwordEncoderService;
-    private static final BigDecimal INITIAL_BALANCE = BigDecimal.valueOf(0.00); // 初始余额设置为0
 
+    /**
+     * Service for password encoding and verification
+     */
+    private final PasswordEncoderService passwordEncoderService;
+
+    /**
+     * Initial balance for new user accounts
+     */
+    private static final BigDecimal INITIAL_BALANCE = BigDecimal.valueOf(0.00);
+
+    /**
+     * Constructor for UserRegisterController with dependency injection.
+     *
+     * @param userRepository Repository for user data access
+     * @param passwordEncoderService Service for password encoding
+     */
     public UserRegisterController(UserRepository userRepository, PasswordEncoderService passwordEncoderService) {
         this.userRepository = userRepository;
         this.passwordEncoderService = passwordEncoderService;
     }
 
+    /**
+     * Handles user registration requests.
+     * Creates a new user account with encoded password and initial balance.
+     *
+     * @param user User information from the registration request
+     * @return Response containing the registration result and user information if successful
+     */
     @PostMapping(value = "/api/users/register")
     public Response register(@RequestBody User user) {
         if (userRepository.findByEmail(user.getEmail()) == null)
         {
             String rawPassword = user.getPassword();
-            // Use Hash value of the password
+            // Encode the password for secure storage
             String encodedPassword = passwordEncoderService.encodePassword(rawPassword);
             user.setEncodedPassword(encodedPassword);
             
-            // 设置初始余额
+            // Set initial balance for the new account
             user.setBalance(INITIAL_BALANCE);
             
-            // 创建日期将由@PrePersist自动设置
+            // Creation date will be automatically set by @PrePersist
             
-            // Save data
+            // Save the new user
             User savedUser = userRepository.save(user);
-            // Return value
+            // Return success response with user information
             return new UserRegisterResponse(
                     "success",
                     savedUser.getUuid(),

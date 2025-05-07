@@ -1,3 +1,7 @@
+/**
+ * Controller class for managing book categories.
+ * Provides endpoints for retrieving category information.
+ */
 package one.wcy.ebookloaningtool.llf.controller;
 
 import one.wcy.ebookloaningtool.llf.service.CategoriesService;
@@ -13,6 +17,10 @@ public class CategoryController {
     @Autowired
     private CategoriesService categoriesService;
 
+    /**
+     * Retrieves all available book categories.
+     * @return Response containing the list of all categories
+     */
     @GetMapping("/getAll")
     public Response getAllCategories() {
         return categoriesService.getAllCategories();

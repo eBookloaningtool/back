@@ -1,8 +1,15 @@
+/**
+ * Implementation of the BorrowService interface.
+ * Provides concrete implementation for managing book borrowing operations,
+ * including borrowing, returning, renewing books, and handling overdue notifications.
+ */
 package one.wcy.ebookloaningtool.llf.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import one.wcy.ebookloaningtool.llf.mapper.BookMapper;
 import one.wcy.ebookloaningtool.llf.mapper.BorrowRecordsMapper;
+import one.wcy.ebookloaningtool.llf.mapper.CartMapper;
+import one.wcy.ebookloaningtool.llf.mapper.WishlistsMapper;
 import one.wcy.ebookloaningtool.llf.pojo.Book;
 import one.wcy.ebookloaningtool.llf.pojo.BorrowHistory;
 import one.wcy.ebookloaningtool.llf.pojo.BorrowList;
@@ -26,71 +33,118 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class BorrowServiceimpl implements BorrowService {
 
+    /**
+     * Repository for user data access
+     */
     @Autowired
     private final UserRepository userRepository;
+
+    /**
+     * Mapper for database operations related to books
+     */
     @Autowired
     private BookMapper bookMapper;
+
+    /**
+     * Mapper for database operations related to borrow records
+     */
     @Autowired
     private BorrowRecordsMapper borrowRecordsMapper;
+
+    /**
+     * Mapper for database operations related to wishlists
+     */
+    @Autowired
+    private WishlistsMapper wishlistsMapper;
+
+    /**
+     * Mapper for database operations related to shopping cart
+     */
+    @Autowired
+    private CartMapper cartMapper;
+
+    /**
+     * Service for sending email notifications
+     */
     @Autowired
     private EmailService emailService;
 
-    //一次租借时长
+    /**
+     * Duration of a single borrowing period in days
+     */
     private final int BORROW_DURATION = 30;
-    //续借时长
+
+    /**
+     * Duration of a renewal period in days
+     */
     private final int RENEW_DURATION = 30;
 
+    /**
+     * Constructor for BorrowServiceimpl with dependency injection.
+     * @param userRepository Repository for user data access
+     */
     public BorrowServiceimpl(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Finds a book by its UUID.
+     * @param bookUUID The UUID of the book to find
+     * @return The book object if found, null otherwise
+     */
     @Override
     public Book findBookById(String bookUUID){
         Book b = bookMapper.findBookById(bookUUID);
         return b;
     }
 
-    //记录借出
+    /**
+     * Records the borrowing of multiple books.
+     * Handles validation, payment, and notification processes.
+     * @param bookIds List of book IDs to be borrowed
+     * @param userUUID The UUID of the user borrowing the books
+     * @return Response indicating success or failure of the operation
+     */
     @Override
     public Response recordBorrow(List<String> bookIds, String userUUID) {
         BigDecimal price = BigDecimal.ZERO;
-        List<String> invalidBookIds = new ArrayList<>(); //记录已失效书籍ID
-        List<String> lowStockBookIds = new ArrayList<>(); //记录库存不足书籍ID
-        List<String> borrowedBookIds = new ArrayList<>(); //记录已借阅书籍ID
-        List<String> bookNames = new ArrayList<>();//记录借阅的书籍名字
-        //计算总金额，并同时确认book是否有效
+        List<String> invalidBookIds = new ArrayList<>(); //record invalid book IDs
+        List<String> lowStockBookIds = new ArrayList<>(); //record low stock book IDs
+        List<String> borrowedBookIds = new ArrayList<>(); //record borrowed book IDs
+        List<String> bookNames = new ArrayList<>();//record book names
+        //calculate total price, and confirm book is valid
         for(String bId : bookIds){
             Book book = bookMapper.findBookById(bId);
             if(book == null){
-                //书不存在
+                //book not exist
                 invalidBookIds.add(bId);
             }
             else if (book.getAvailableCopies() < 1){
-                //库存不足
+                //low stock
                 lowStockBookIds.add(bId);
             }
             else if (!checkBorrow(bId,userUUID).isEmpty()) {
-                //已借阅
+                //already borrowed
                 borrowedBookIds.add(bId);
             } else{
                 price = price.add(book.getPrice());
             }
         }
-        //如果存在失效/库存不足/已借阅的书籍，返回借阅失效书籍信息
+        //if there are invalid/low stock/already borrowed books, return borrow failed information
         if (!invalidBookIds.isEmpty() || !lowStockBookIds.isEmpty() || !borrowedBookIds.isEmpty()) {
             return new BorrowFailedResponse("Borrow failed.", invalidBookIds, lowStockBookIds, borrowedBookIds);
         }
 
-        //借阅数达上限
+        //borrow limit reached
         if(borrowRecordsMapper.countBorrow(userUUID,"borrowed") + bookIds.size() >10){
             return new Response("Reach borrow limit");
         }
 
         BigDecimal balance = userRepository.findByUuid(userUUID).getBalance();
-        BigDecimal newBalance = balance.subtract(price);//计算扣款
+        BigDecimal newBalance = balance.subtract(price);//calculate the deduction
         if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
-            //余额不足
-            return new LowBalanceResponse("insufficient balance", newBalance.negate());//返回需要补齐的金额
+            //insufficient balance
+            return new LowBalanceResponse("insufficient balance", newBalance.negate());//return the amount needed to be paid
         }
 
         LocalDate dueTime;
@@ -99,13 +153,17 @@ public class BorrowServiceimpl implements BorrowService {
 
         for(String bId : bookIds){
             Book book = bookMapper.findBookById(bId);
-            bookNames.add(book.getTitle());//记录书籍名字
-            //书本库存-1
-            //书本借阅次数+1
+            bookNames.add(book.getTitle());//record book names
+            //book stock -1
+            //book borrow times +1
             book.setBorrowTimes(book.getBorrowTimes() + 1);
             book.setAvailableCopies(book.getAvailableCopies() - 1);
             bookMapper.updateBook(book);
-            //在BorrowRecords中记录借出
+            //if the book is in the wishlist, remove it from the wishlist
+            wishlistsMapper.deleteWishlists(userUUID, bId);
+            //remove from cart
+            cartMapper.deleteCart(userUUID, bId);
+            //record borrow in BorrowRecords
             BorrowRecords borrowRecords = new BorrowRecords();
             borrowRecords.setBookId(bId);
             borrowRecords.setUuid(userUUID);
@@ -114,12 +172,12 @@ public class BorrowServiceimpl implements BorrowService {
             borrowRecords.setStatus("borrowed");
             borrowRecordsMapper.addBorrowRecord(borrowRecords);
         }
-            //更新当前用户的账户余额
+            //update user's balance
             User user = userRepository.findByUuid(userUUID);
             user.setBalance(newBalance);
             userRepository.save(user);
-            // 发送借阅成功邮件
-        // 异步发送邮件
+            //send borrow success email
+        //send email asynchronously
         CompletableFuture.runAsync(() -> {
             try {
                 String subject = "eBook borrow system - Borrow notification";
@@ -143,14 +201,21 @@ public class BorrowServiceimpl implements BorrowService {
             return new BorrowResponse("success", dueTime, newBalance);
     }
 
+    /**
+     * Processes the return of a borrowed book.
+     * Updates book availability and sends return notification.
+     * @param book The book to be returned
+     * @param userUUID The UUID of the user returning the book
+     * @return Response indicating success or failure of the operation
+     */
     @Override
     public Response returnBook(Book book, String userUUID) {
 
         String bookUUID = book.getBookId();
-        //判断是否存在正在借出记录
+        //check if there is a borrowing record
         List<BorrowRecords> brl = checkBorrow(bookUUID,userUUID);
         if (!brl.isEmpty()){
-            //如果存在则将该书库存+1，将对应记录的status改为"returned"，并记录归还日期,否则返回当前未借阅该书
+            //if there is a borrowing record, add 1 to the book stock, change the status to "returned", and record the return date, otherwise return the book is not borrowed
             book.setAvailableCopies(book.getAvailableCopies() + 1);
             bookMapper.updateBook(book);
             BorrowRecords borrowedRecord = brl.getFirst();
@@ -161,7 +226,7 @@ public class BorrowServiceimpl implements BorrowService {
             User user = userRepository.findByUuid(userUUID);
             List<String> bookNames = new ArrayList<>();
             bookNames.add(book.getTitle());
-            // 异步发送邮件
+            //send email asynchronously
             CompletableFuture.runAsync(() -> {
                         try {
                             String subject = "eBook borrow system - Return notification";
@@ -179,34 +244,41 @@ public class BorrowServiceimpl implements BorrowService {
         }else return new Response("The user do not borrow this book.");
     }
 
+    /**
+     * Processes the renewal of a borrowed book's loan period.
+     * Handles payment and extends the due date.
+     * @param book The book to be renewed
+     * @param userUUID The UUID of the user renewing the book
+     * @return Response indicating success or failure of the operation
+     */
     @Override
     public Response renewBook(Book book, String userUUID) {
         String bookUUID = book.getBookId();
         BigDecimal price = book.getPrice();
         BigDecimal balance = userRepository.findByUuid(userUUID).getBalance();
-        BigDecimal newBalance = balance.subtract(price);//计算扣款
+        BigDecimal newBalance = balance.subtract(price);//calculate the deduction
         if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
-            //余额不足
-            return new LowBalanceResponse("insufficient balance", newBalance.negate());//返回需要补齐的金额
+            //insufficient balance
+            return new LowBalanceResponse("insufficient balance", newBalance.negate());//return the amount needed to be paid
         }
-        //判断是否存在正在借出记录
+        //check if there is a borrowing record
         List<BorrowRecords> brl = checkBorrow(bookUUID,userUUID);
         if (!brl.isEmpty()){
-            //如果存在则延长逾期日期，否则返回当前未借阅该书
+            //if there is a borrowing record, extend the overdue date, otherwise return the book is not borrowed
             BorrowRecords borrowedRecord = brl.getFirst();
             LocalDate newDueTime = borrowedRecord.getDueDate().plusDays(RENEW_DURATION);
             borrowedRecord.setDueDate(newDueTime);
             borrowRecordsMapper.updateBorrowRecord(borrowedRecord);
-            //书借阅次数+1
+            //book borrow times +1
             book.setBorrowTimes(book.getBorrowTimes() + 1);
             bookMapper.updateBook(book);
-            //用户余额更新
+            //user balance update
             User user = userRepository.findByUuid(userUUID);
             user.setBalance(newBalance);
             userRepository.save(user);
             List<String> bookNames = new ArrayList<>();
             bookNames.add(book.getTitle());
-            // 发送续借成功邮件
+            //send renew success email
             String subject = "eBook borrow system - Re-borrow notification";
             String emailBody = buildBorrowEmailBody(user.getName(), bookNames, "re-borrow");
             boolean emailSent = emailService.sendHtmlEmail(user.getEmail(), subject, emailBody);
@@ -218,18 +290,22 @@ public class BorrowServiceimpl implements BorrowService {
         }else return new Response("The user do not borrow this book.");
     }
 
+    /**
+     * Sends reminders for books that will be due soon.
+     * @param i Number of days before due date to send reminder
+     */
     @Override
     public void overdueReminder(int i) {
         List<BorrowRecords> brl = borrowRecordsMapper.findByStatus("borrowed");
-        LocalDate ReminderDate = LocalDate.now().plusDays(i);//根据传入i，计算需要提醒的书籍的逾期日期
+        LocalDate ReminderDate = LocalDate.now().plusDays(i);//calculate the overdue date of the books that need to be reminded
 
         for (BorrowRecords borrowRecords : brl) {
-            LocalDate dueDate = borrowRecords.getDueDate();//获取逾期日期
+            LocalDate dueDate = borrowRecords.getDueDate();//get overdue date
             if (ReminderDate.equals(dueDate)) {
                 String userUUID = borrowRecords.getUuid();
                 User user = userRepository.findByUuid(userUUID);
                 Book book = bookMapper.findBookById(borrowRecords.getBookId());
-                // 发送逾期提醒邮件
+                //send overdue reminder email
                 String subject = "eBook borrow system - Overdue reminder";
                 String emailBody = buildAutoReturnEmailBody(user.getName(), book.getTitle(), "will reach its due date on ", borrowRecords.getDueDate());
                 boolean emailSent = emailService.sendHtmlEmail(user.getEmail(), subject, emailBody);
@@ -241,18 +317,22 @@ public class BorrowServiceimpl implements BorrowService {
         }
     }
 
+    /**
+     * Automatically processes the return of overdue books.
+     * Updates book status and sends notifications.
+     */
     @Override
     public void autoReturn() {
         LocalDate dueDate = LocalDate.now();
         List<BorrowRecords> brl = borrowRecordsMapper.findByStatus("borrowed");
         for (BorrowRecords borrowRecords : brl) {
             if (borrowRecords.getDueDate().equals(dueDate)) {
-                //更改借阅状态
+                //change borrow status
                 borrowRecords.setStatus("returned");
-                //设置归还时间为当前时间
+                //set return date to current time
                 borrowRecords.setReturnDate(LocalDate.now());
                 borrowRecordsMapper.updateBorrowRecord(borrowRecords);
-                //库存+1
+                //book stock +1
                 Book book = bookMapper.findBookById(borrowRecords.getBookId());
                 book.setAvailableCopies(book.getAvailableCopies() + 1);
                 bookMapper.updateBook(book);
@@ -260,7 +340,7 @@ public class BorrowServiceimpl implements BorrowService {
                 User user = userRepository.findByUuid(borrowRecords.getUuid());
 
 
-                // 发送自动还书邮件
+                //send auto return email
                 String subject = "eBook borrow system - Auto-return notification";
                 String emailBody = buildAutoReturnEmailBody(user.getName(), book.getTitle(), "reach its due date on ", borrowRecords.getDueDate());
                 boolean emailSent = emailService.sendHtmlEmail(user.getEmail(), subject, emailBody);
@@ -272,39 +352,63 @@ public class BorrowServiceimpl implements BorrowService {
         }
     }
 
+    /**
+     * Retrieves the list of books currently borrowed by a user.
+     * @param userID The ID of the user
+     * @return Response containing the list of currently borrowed books
+     */
     @Override
-    //获取借阅列表
     public Response getBorrowList(String userID) {
         List<BorrowList> brl = borrowRecordsMapper.findBorrowList(userID, "borrowed");
         return new BorrowListResponse("success", brl);
     }
 
+    /**
+     * Retrieves the complete borrowing history of a user.
+     * @param userID The ID of the user
+     * @return Response containing the user's borrowing history
+     */
     @Override
-    //获取借阅历史记录
     public Response getBorrowHistory(String userID) {
         List<BorrowHistory> brl = borrowRecordsMapper.findBorrowHistory(userID);
         return new BorrowHistoryResponse("success", brl);
     }
 
+    /**
+     * Checks if a book is currently borrowed by a user.
+     * @param bookUUID The UUID of the book to check
+     * @param userUUID The UUID of the user
+     * @return List of borrow records for the book and user
+     */
     private List<BorrowRecords> checkBorrow(String bookUUID, String userUUID) {
         return borrowRecordsMapper.findByBookUUIDAndUserUUIDAndStatus(bookUUID, userUUID, "borrowed");
     }
 
+    /**
+     * Retrieves the content of an e-book.
+     * @param bookUUID The UUID of the book
+     * @param userUUID The UUID of the user requesting the content
+     * @return The content of the book
+     */
     @Override
     public String getBookContent(String bookUUID, String userUUID) {
-        // 检查用户是否正在借阅该书
+        //check if the user is borrowing the book
         List<BorrowRecords> borrowRecords = checkBorrow(bookUUID, userUUID);
         if (borrowRecords.isEmpty()) {
-            return null; // 用户未借阅该书，返回null
+            return null; //the user is not borrowing the book, return null
         }
         
-        // 用户正在借阅该书，返回内容URL
+        //the user is borrowing the book, return the content URL
         Book book = bookMapper.findBookById(bookUUID);
         return book != null ? book.getContentURL() : null;
     }
 
     /**
-     * 构建借阅邮件正文
+     * Builds the HTML email body for borrow-related notifications.
+     * @param userName Name of the user
+     * @param bookNames List of book names
+     * @param function Type of operation (borrow/return/re-borrow)
+     * @return HTML formatted email body
      */
     private String buildBorrowEmailBody(String userName, List<String> bookNames, String function) {
         StringBuilder htmlBody = new StringBuilder("<html><body>");
@@ -323,7 +427,12 @@ public class BorrowServiceimpl implements BorrowService {
     }
 
     /**
-     * 构建自动归还邮件正文
+     * Builds the HTML email body for auto-return notifications.
+     * @param userName Name of the user
+     * @param bookName Name of the book
+     * @param function Type of notification
+     * @param returnDate Date of return
+     * @return HTML formatted email body
      */
     private String buildAutoReturnEmailBody(String userName, String bookName, String function, LocalDate returnDate) {
         return "<html><body>" +

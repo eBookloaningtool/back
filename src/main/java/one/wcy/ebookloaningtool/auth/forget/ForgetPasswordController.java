@@ -1,3 +1,8 @@
+/**
+ * Controller class handling password reset requests.
+ * Provides endpoint for initiating the password reset process.
+ * Implements security measures to prevent email enumeration attacks.
+ */
 package one.wcy.ebookloaningtool.auth.forget;
 
 import lombok.RequiredArgsConstructor;
@@ -12,18 +17,24 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ForgetPasswordController {
 
+    /**
+     * Service for handling password reset operations
+     */
     private final ForgetPasswordService forgetPasswordService;
 
     /**
-     * 处理忘记密码请求
-     * @param forgetPasswordForm 包含用户邮箱的表单
-     * @return 响应结果
+     * Handles password reset requests.
+     * Processes the request and sends reset instructions if the email exists.
+     * Always returns success to prevent email enumeration attacks.
+     *
+     * @param forgetPasswordForm Form containing the user's email address
+     * @return Response indicating the request was received
      */
     @PostMapping("/forget")
     public Response forgetPassword(@RequestBody ForgetPasswordForm forgetPasswordForm) {
         boolean successful = forgetPasswordService.handleForgetPassword(forgetPasswordForm.getEmail());
         
-        // 无论是否成功，都返回success状态，以防止枚举攻击
+        // Always return success to prevent email enumeration attacks
         return new Response("success");
     }
 } 

@@ -1,3 +1,8 @@
+/**
+ * Mapper interface for Book entity.
+ * Provides database operations for managing electronic books,
+ * including CRUD operations and search functionality.
+ */
 package one.wcy.ebookloaningtool.llf.mapper;
 
 import one.wcy.ebookloaningtool.llf.pojo.Book;
@@ -10,10 +15,19 @@ import java.util.List;
 @Mapper
 public interface BookMapper {
 
-    //根据bookID查询电子书
+    /**
+     * Retrieves a book by its unique identifier.
+     * @param id The unique identifier of the book
+     * @return The book entity if found, null otherwise
+     */
     @Select("select * from Book where bookId=#{id}")
     Book findBookById(String id);
-    //根据提供的Book更新实体
+
+    /**
+     * Updates an existing book entity in the database.
+     * @param book The book entity containing updated information
+     * @return Number of rows affected by the update operation
+     */
     @Update("update Book " +
             "set title = #{title}, " +
             "author = #{author}, " +
@@ -29,11 +43,22 @@ public interface BookMapper {
             "Where bookId = #{bookId}")
     int updateBook(Book book);
 
-    //按借阅次数降序获取热门书籍
+    /**
+     * Retrieves a list of book IDs sorted by borrow count in descending order.
+     * Used to identify the most popular books in the system.
+     * @return List of book IDs sorted by popularity
+     */
     @Select("SELECT bookId FROM Book ORDER BY borrowTimes DESC")
     List<String> findTopPopularBooks();
 
-    //根据标题、作者、类别搜索电子书
+    /**
+     * Searches for books based on title, author, and category criteria.
+     * Supports partial matches and flexible search parameters.
+     * @param title The title to search for (optional)
+     * @param author The author to search for (optional)
+     * @param category The category to search for (optional)
+     * @return List of book IDs matching the search criteria
+     */
     @Select("<script>" +
             "SELECT bookId FROM Book WHERE 1=1" +
             "<if test='title != null'> AND title LIKE CONCAT('%', #{title}, '%')</if>" +
