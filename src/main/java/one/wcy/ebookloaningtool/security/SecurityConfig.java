@@ -1,3 +1,8 @@
+/**
+ * Security configuration class for the application.
+ * Configures Spring Security settings including CORS, CSRF protection,
+ * and request authorization rules.
+ */
 package one.wcy.ebookloaningtool.security;
 
 import org.springframework.context.annotation.Bean;
@@ -17,6 +22,15 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    /**
+     * Configures the security filter chain for the application.
+     * Sets up CORS, CSRF protection, and request authorization rules.
+     * Currently permits all requests to /api/** endpoints.
+     *
+     * @param http HttpSecurity object to configure
+     * @return configured SecurityFilterChain
+     * @throws Exception if configuration fails
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -32,6 +46,13 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Configures CORS (Cross-Origin Resource Sharing) settings.
+     * Allows requests from any origin with specific HTTP methods and headers.
+     * Exposes the Authorization header for JWT token handling.
+     *
+     * @return configured CorsConfigurationSource
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

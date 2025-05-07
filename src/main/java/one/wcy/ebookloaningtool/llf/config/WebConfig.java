@@ -1,3 +1,7 @@
+/**
+ * Web configuration class for the application.
+ * Configures CORS settings and request interceptors for the web application.
+ */
 package one.wcy.ebookloaningtool.llf.config;
 
 import one.wcy.ebookloaningtool.llf.interceptors.LoginInterceptor;
@@ -9,21 +13,34 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-    //拦截器
+    /**
+     * Interceptor for handling user authentication
+     */
     @Autowired
     private LoginInterceptor logininterceptor;
 
+    /**
+     * Configures request interceptors for the application.
+     * Excludes certain paths from authentication requirements:
+     * - User registration and authentication endpoints
+     * - Book retrieval and search endpoints
+     * - Review system endpoints
+     * - Category management endpoints
+     * @param registry The interceptor registry to configure
+     */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        //登录接口、注册接口、忘记密码接口和电子书管理不拦截
-        //评论系统中获取书籍评论、获取评论信息不拦截
-        //获取类别接口不拦截
         registry.addInterceptor(logininterceptor)
                 .excludePathPatterns("/api/users/register", "/api/auth/login", "/api/auth/forget",
                         "/api/books/get", "/api/books/popular", "/api/books/search",
                         "/api/reviews/book", "/api/reviews/content", "/api/categories/**");
     }
 
+    /**
+     * Configures CORS (Cross-Origin Resource Sharing) settings for the application.
+     * Allows cross-origin requests with specific methods, headers, and credentials.
+     * @param registry The CORS registry to configure
+     */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")

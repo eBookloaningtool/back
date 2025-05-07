@@ -1,3 +1,7 @@
+/**
+ * Controller class for managing user's shopping cart operations.
+ * Handles adding, removing, and retrieving books from the user's cart.
+ */
 package one.wcy.ebookloaningtool.llf.controller;
 
 import io.jsonwebtoken.Claims;
@@ -21,20 +25,31 @@ public class CartController {
     @Autowired
     private CartService cartService;
 
+    /**
+     * Adds a book to the user's shopping cart.
+     * Checks book availability and stock before adding.
+     * @param book The book to be added to the cart
+     * @return Response indicating success or failure of the operation
+     */
     @PostMapping("/add")
     public Response add(@RequestBody Book book){
-        //从令牌中获取用户uuid
+        //get userID from token
         Claims claims = ThreadLocalUtil.get();
         String userID = claims.get("uuid").toString();
         Book b = borrowService.findBookById(book.getBookId());
-        //没找到对应书籍
+        //book not exist
         if(b == null) return new Response("Book not exist.");
-        //没有库存
+        //no stock
         else if (b.getAvailableCopies() < 1) return new Response("Stock is too low.");
-        //将书添加到愿望清单
+        //add book to wishlist
         else return cartService.addBook(b.getBookId(), userID);
     }
 
+    /**
+     * Removes one or more books from the user's shopping cart.
+     * @param books Request containing list of book IDs to be removed
+     * @return Response indicating success or failure of the operation
+     */
     @PostMapping("/remove")
     public Response delete(@RequestBody BooksRequest books){
         Claims claims = ThreadLocalUtil.get();
@@ -43,6 +58,10 @@ public class CartController {
         return cartService.deleteBook(bs, userID);
     }
 
+    /**
+     * Retrieves the current contents of the user's shopping cart.
+     * @return Response containing the list of books in the cart
+     */
     @PostMapping("/get")
     public Response get(){
         Claims claims = ThreadLocalUtil.get();

@@ -1,3 +1,7 @@
+/**
+ * Controller class for managing user's wishlist operations.
+ * Handles adding, removing, and retrieving books from the user's wishlist.
+ */
 package one.wcy.ebookloaningtool.llf.controller;
 
 import io.jsonwebtoken.Claims;
@@ -19,22 +23,33 @@ public class WishlistController {
     @Autowired
     private WishlistService wishlistService;
 
+    /**
+     * Adds a book to the user's wishlist.
+     * Verifies book existence before adding.
+     * @param book The book to be added to the wishlist
+     * @return Response indicating success or failure of the operation
+     */
     @PostMapping("/add")
     public Response add(@RequestBody Book book){
-        //从令牌中获取用户uuid
+        //get userID from token
         Claims claims = ThreadLocalUtil.get();
         String userID = claims.get("uuid").toString();
         Book b = borrowService.findBookById(book.getBookId());
         if(b == null){
-            //没找到对应书籍
+            //book not exist
             return new Response("Book not exist.");
         }
         else{
-            //将书添加到愿望清单
+            //add book to wishlist
             return wishlistService.addBook(b.getBookId(), userID);
         }
     }
 
+    /**
+     * Removes a book from the user's wishlist.
+     * @param book The book to be removed from the wishlist
+     * @return Response indicating success or failure of the operation
+     */
     @PostMapping("/delete")
     public Response delete(@RequestBody Book book){
         Claims claims = ThreadLocalUtil.get();
@@ -42,6 +57,10 @@ public class WishlistController {
         return wishlistService.deleteBook(book.getBookId(), userID);
     }
 
+    /**
+     * Retrieves the current contents of the user's wishlist.
+     * @return Response containing the list of books in the wishlist
+     */
     @PostMapping("get")
     public Response get(){
         Claims claims = ThreadLocalUtil.get();

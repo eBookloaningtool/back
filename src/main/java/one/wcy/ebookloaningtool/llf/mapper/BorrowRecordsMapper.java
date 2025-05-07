@@ -1,3 +1,8 @@
+/**
+ * Mapper interface for BorrowRecords entity.
+ * Provides database operations for managing book borrowing records,
+ * including tracking current borrows, history, and record updates.
+ */
 package one.wcy.ebookloaningtool.llf.mapper;
 
 import one.wcy.ebookloaningtool.llf.pojo.BorrowHistory;
@@ -9,28 +14,54 @@ import java.util.List;
 
 @Mapper
 public interface BorrowRecordsMapper {
-    //根据userid,bookid,status查找记录,可能存在多条，用List存储
+    /**
+     * Retrieves borrow records by book ID, user ID, and status.
+     * @param bookUUID The unique identifier of the book
+     * @param userUUID The unique identifier of the user
+     * @param status The status of the borrow record
+     * @return List of matching borrow records
+     */
     @Select("select * from BorrowRecords where bookId = #{bookUUID} and uuid = #{userUUID} and status = #{status}")
     List<BorrowRecords> findByBookUUIDAndUserUUIDAndStatus(String bookUUID, String userUUID, String status);
 
-    //根据status查找记录，可能存在多条，用List存储
+    /**
+     * Retrieves all borrow records with a specific status.
+     * @param status The status to filter by
+     * @return List of borrow records with the specified status
+     */
     @Select("select * from BorrowRecords where status = #{status} ORDER BY borrowDate")
     List<BorrowRecords> findByStatus(String status);
 
-    //根据用户id和status查找借阅记录
+    /**
+     * Retrieves a simplified list of borrow records for a user.
+     * @param userUUID The unique identifier of the user
+     * @param status The status of the borrow records
+     * @return List of borrow records with basic information
+     */
     @Select("select borrowId,bookId,borrowDate,dueDate from BorrowRecords where uuid = #{userUUID} and status = #{status} ORDER BY borrowDate")
     List<BorrowList> findBorrowList(String userUUID, String status);
 
-    //根据用户id查找借阅历史
+    /**
+     * Retrieves the complete borrowing history for a user.
+     * @param userUUID The unique identifier of the user
+     * @return List of borrow records including return dates and status
+     */
     @Select("select borrowId,bookId,borrowDate,dueDate, returnDate, status from BorrowRecords where uuid = #{userUUID} ORDER BY borrowDate")
     List<BorrowHistory> findBorrowHistory(String userUUID);
 
-    //根据提供的BorrowRecords实体插入
+    /**
+     * Creates a new borrow record in the database.
+     * @param borrowRecords The borrow record entity to be inserted
+     */
     @Insert("insert into BorrowRecords (borrowId, uuid, bookId, borrowDate, dueDate, returnDate, status) " +
             "values (UUID(), #{uuid}, #{bookId}, #{borrowDate}, #{dueDate}, #{returnDate}, #{status})")
     void addBorrowRecord(BorrowRecords borrowRecords);
 
-    //根据提供的BorrowRecords更新实体
+    /**
+     * Updates an existing borrow record in the database.
+     * @param borrowRecords The borrow record entity containing updated information
+     * @return Number of rows affected by the update operation
+     */
     @Update("update BorrowRecords " +
             "set uuid = #{uuid}, " +
             "bookId = #{bookId}, " +
@@ -41,9 +72,13 @@ public interface BorrowRecordsMapper {
             "Where borrowId = #{borrowId}")
     int updateBorrowRecord(BorrowRecords borrowRecords);
 
+    /**
+     * Counts the number of borrow records for a user with a specific status.
+     * @param userId The unique identifier of the user
+     * @param status The status to count
+     * @return The number of matching borrow records
+     */
     @Select("SELECT COUNT(*) FROM BorrowRecords " +
             "WHERE uuid = #{userId} and status = #{status}")
     int countBorrow(String userId, String status);
-
-
 }
