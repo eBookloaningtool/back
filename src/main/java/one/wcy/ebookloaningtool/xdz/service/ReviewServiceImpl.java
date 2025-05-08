@@ -22,6 +22,10 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Implementation of the review service interface.
+ * Handles operations related to book reviews, including adding, retrieving, and deleting reviews.
+ */
 @Service
 public class ReviewServiceImpl implements ReviewService {
 
@@ -37,13 +41,24 @@ public class ReviewServiceImpl implements ReviewService {
     @Autowired
     private final UserRepository userRepository;
 
+    /**
+     * Constructs a new ReviewServiceImpl with the specified user repository.
+     *
+     * @param userRepository The repository for user-related operations
+     */
     public ReviewServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Adds a new review for a book.
+     *
+     * @param request The review request containing book ID, rating, and comment
+     * @return Response containing the generated comment ID or an error message
+     */
     @Override
     public Response addReview(AddReviewRequest request) {
-        // 1. 参数校验
+        // 1. Parameter validation
         if (request.getBookId() == null || request.getComment() == null || request.getRating() == null) {
             return new Response("Invalid parameters. Could not be null.");
         }
@@ -53,27 +68,25 @@ public class ReviewServiceImpl implements ReviewService {
             return new Response("Invalid rating. Rating should be between 1 and 5.");
         }
 
-        // 2. 检查用户是否已登录
+        // 2. Check if user is logged in
         Claims claims = ThreadLocalUtil.get();
         if (claims == null) {
             return new Response("Unauthorized");
         }
         String userId = claims.get("uuid").toString();
 
-
-        // 3. 检查书籍是否存在（调用现有BorrowService的findBookById）
+        // 3. Check if book exists (using existing BorrowService's findBookById)
         Book book = borrowService.findBookById(request.getBookId());
         if (book == null) {
             return new Response("Book not exist");
         }
 
-        // 4. 检查用户是否已借阅该书
+        // 4. Check if user has borrowed the book
         if ((commentsMapper.countActiveBorrow(book.getBookId(), userId)) == 0) {
             return new Response("You haven't borrowed this book yet.");
         }
 
-
-        // 5. 保存评论到数据库
+        // 5. Save comment to database
         Comment comment = new Comment();
         comment.setCommentId(UUID.randomUUID().toString());
         comment.setUuid(userId);
@@ -90,6 +103,11 @@ public class ReviewServiceImpl implements ReviewService {
         return new AddReviewResponse("success", generatedCommentId);
     }
 
+    /**
+     * Retrieves all reviews made by the current user.
+     *
+     * @return Response containing the list of user's review IDs
+     */
     @Override
     public Response getUserReviews() {
         Claims claims = ThreadLocalUtil.get();
@@ -107,6 +125,12 @@ public class ReviewServiceImpl implements ReviewService {
         return new GetReviewsResponse("success", commentIds);
     }
 
+    /**
+     * Retrieves all reviews for a specific book.
+     *
+     * @param bookId The unique identifier of the book
+     * @return Response containing the list of review IDs for the specified book
+     */
     @Override
     public Response getBookReviews(String bookId) {
         if (bookId == null) {
@@ -126,9 +150,15 @@ public class ReviewServiceImpl implements ReviewService {
         return new GetReviewsResponse("success", commentIds);
     }
 
+    /**
+     * Retrieves the content of a specific review.
+     *
+     * @param commentId The unique identifier of the review
+     * @return Response containing the review content, including user information and rating
+     */
     @Override
     public Response getCommentContent(String commentId) {
-        // 参数校验
+        // Parameter validation
         if (commentId == null || commentId.isEmpty()) {
             return new Response("Invalid commentId.");
         }
@@ -146,6 +176,12 @@ public class ReviewServiceImpl implements ReviewService {
                 comment.getRating(), comment.getContent(), comment.getCreatedAt().toLocalDate());
     }
 
+    /**
+     * Deletes a specific review.
+     *
+     * @param request The delete request containing the review ID
+     * @return Response indicating the success or failure of the deletion
+     */
     @Override
     public Response deleteReview(DeleteReviewRequest request) {
         Claims claims = ThreadLocalUtil.get();

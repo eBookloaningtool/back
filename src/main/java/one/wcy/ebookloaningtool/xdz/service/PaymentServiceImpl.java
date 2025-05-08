@@ -17,6 +17,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Implementation of the payment service interface.
+ * Handles user balance top-up operations and payment history retrieval.
+ */
 @Service
 public class PaymentServiceImpl implements PaymentService {
 
@@ -26,28 +30,38 @@ public class PaymentServiceImpl implements PaymentService {
     @Autowired
     private final UserRepository userRepository;
 
+    /**
+     * Constructs a new PaymentServiceImpl with the specified user repository.
+     *
+     * @param userRepository The repository for user-related operations
+     */
     public PaymentServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Processes a top-up request for a user's balance.
+     *
+     * @param request The top-up request containing the amount to be added
+     * @return Response containing the payment ID and updated balance, or an error message
+     */
     @Override
     public Response topUp(TopUpRequest request) {
-        // 参数校验
+        // Parameter validation
         if (request.getAmount() <= 0) {
             return new Response("Invalid amount");
         }
 
-        // 用户认证
+        // User authentication
         Claims claims = ThreadLocalUtil.get();
         if (claims == null) {
             return new Response("Unauthorized");
         }
         String userId = claims.get("uuid").toString();
 
-
         paymentMapper.updateBalance(userId, BigDecimal.valueOf(request.getAmount()));
 
-        // 记录支付流水
+        // Record payment transaction
         PaymentRecord payment = new PaymentRecord();
         payment.setPaymentId(UUID.randomUUID().toString());
         payment.setUuid(userId);
@@ -60,19 +74,24 @@ public class PaymentServiceImpl implements PaymentService {
         return new TopUpResponse("success", payment.getPaymentId(), balance);
     }
 
+    /**
+     * Retrieves the payment history for the current user.
+     *
+     * @return Response containing the list of payment history items
+     */
     @Override
     public Response getPaymentHistory() {
-        // 1. 获取当前登录用户
+        // 1. Get current logged-in user
         Claims claims = ThreadLocalUtil.get();
         if (claims == null) {
             return new Response("Unauthorized");
         }
         String userId = claims.get("uuid").toString();
 
-        // 2. 查询充值历史
+        // 2. Query payment history
         List<PaymentHistoryResponse.PaymentHistoryItem> history = paymentMapper.findUserPaymentHistory(userId);
 
-        // 3. 返回结果
+        // 3. Return results
         return new PaymentHistoryResponse("success", history);
     }
 }

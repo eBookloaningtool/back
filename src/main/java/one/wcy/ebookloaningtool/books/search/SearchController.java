@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * Controller class for searching books.
+ * Provides endpoints for searching books by various criteria such as title, author, and category.
+ */
 @RestController
 @RequestMapping("/api/books")
 public class SearchController {
@@ -17,12 +21,20 @@ public class SearchController {
     @Autowired
     private BookService bookService;
 
+    /**
+     * Searches for books based on provided criteria.
+     * At least one search parameter (title, author, or category) must be provided.
+     * @param title The title of the book to search for (optional)
+     * @param author The author of the book to search for (optional)
+     * @param category The category of the book to search for (optional)
+     * @return ResponseEntity containing the search results or an error response if no search criteria provided
+     */
     @GetMapping("/search")
     public ResponseEntity<SearchBooksResponse> searchBooks(
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String author,
             @RequestParam(required = false) String category) {
-        // 检查是否至少提供了一个搜索条件
+        // Check if at least one search criteria is provided
         if (title == null && author == null && category == null) {
             return ResponseEntity.badRequest().body(new SearchBooksResponse("error"));
         }

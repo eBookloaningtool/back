@@ -14,76 +14,87 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Email service using SMTP to send emails
+ * Service class for handling email notifications using SMTP.
+ * Provides methods for sending both plain text and HTML emails to single or multiple recipients.
+ * Implements error handling and logging for email operations.
  */
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class EmailService {
     
+    /**
+     * JavaMailSender instance for sending emails via SMTP
+     */
     private final JavaMailSender mailSender;
     
+    /**
+     * Email address used as the sender for all outgoing emails.
+     * Value is injected from application properties.
+     */
     @Value("${spring.mail.username}")
     private String senderEmail;
     
     /**
-     * Send plain text email
+     * Sends a plain text email to a single recipient.
      * 
-     * @param to recipient address
-     * @param subject email subject
-     * @param textBody email content (plain text)
-     * @return whether sending was successful
+     * @param to recipient email address
+     * @param subject email subject line
+     * @param textBody email content in plain text format
+     * @return true if the email was sent successfully, false otherwise
      */
     public boolean sendTextEmail(String to, String subject, String textBody) {
         return sendEmail(Collections.singletonList(to), null, null, subject, textBody, null);
     }
     
     /**
-     * Send HTML email
+     * Sends an HTML-formatted email to a single recipient.
      * 
-     * @param to recipient address
-     * @param subject email subject
-     * @param htmlBody email content (HTML format)
-     * @return whether sending was successful
+     * @param to recipient email address
+     * @param subject email subject line
+     * @param htmlBody email content in HTML format
+     * @return true if the email was sent successfully, false otherwise
      */
     public boolean sendHtmlEmail(String to, String subject, String htmlBody) {
         return sendEmail(Collections.singletonList(to), null, null, subject, null, htmlBody);
     }
     
     /**
-     * Send bulk plain text emails
+     * Sends a plain text email to multiple recipients.
      * 
-     * @param toList recipient list
-     * @param subject email subject
-     * @param textBody email content (plain text)
-     * @return whether sending was successful
+     * @param toList list of recipient email addresses
+     * @param subject email subject line
+     * @param textBody email content in plain text format
+     * @return true if the email was sent successfully to all recipients, false otherwise
      */
     public boolean sendBulkTextEmail(List<String> toList, String subject, String textBody) {
         return sendEmail(toList, null, null, subject, textBody, null);
     }
     
     /**
-     * Send bulk HTML emails
+     * Sends an HTML-formatted email to multiple recipients.
      * 
-     * @param toList recipient list
-     * @param subject email subject
-     * @param htmlBody email content (HTML format)
-     * @return whether sending was successful
+     * @param toList list of recipient email addresses
+     * @param subject email subject line
+     * @param htmlBody email content in HTML format
+     * @return true if the email was sent successfully to all recipients, false otherwise
      */
     public boolean sendBulkHtmlEmail(List<String> toList, String subject, String htmlBody) {
         return sendEmail(toList, null, null, subject, null, htmlBody);
     }
     
     /**
-     * General method for sending emails
+     * Core email sending method that handles both plain text and HTML emails.
+     * Supports multiple recipients, CC, and BCC lists.
+     * Implements error handling and logging for all email operations.
      * 
-     * @param toList recipient list
-     * @param ccList cc list
-     * @param bccList bcc list
-     * @param subject email subject
-     * @param textBody email content (plain text)
-     * @param htmlBody email content (HTML format)
-     * @return whether sending was successful
+     * @param toList list of primary recipient email addresses
+     * @param ccList list of CC recipient email addresses (optional)
+     * @param bccList list of BCC recipient email addresses (optional)
+     * @param subject email subject line
+     * @param textBody email content in plain text format (optional)
+     * @param htmlBody email content in HTML format (optional)
+     * @return true if the email was sent successfully, false if any error occurred
      */
     public boolean sendEmail(List<String> toList, List<String> ccList, List<String> bccList, 
                           String subject, String textBody, String htmlBody) {
