@@ -3,21 +3,25 @@ package one.wcy.ebookloaningtool.books;
 import one.wcy.ebookloaningtool.llf.pojo.Book;
 import java.util.List;
 
+/**
+ * Service interface for managing e-books.
+ * Provides methods for retrieving book details and searching books.
+ */
 public interface BookService {
     
     /**
-     * 根据ID获取电子书详情
-     * @param bookId 电子书ID
-     * @return 电子书对象，如果不存在则返回null
+     * Retrieves an e-book by its ID.
+     * @param bookId The ID of the e-book
+     * @return The e-book object if found, null otherwise
      */
     Book getBookById(String bookId);
     
     /**
-     * 根据标题、作者、类别搜索电子书
-     * @param title 标题关键字
-     * @param author 作者关键字
-     * @param category 类别关键字
-     * @return 电子书ID列表
+     * Searches for e-books by title, author, and category.
+     * @param title Title keyword
+     * @param author Author keyword
+     * @param category Category keyword
+     * @return List of matching e-book IDs
      */
     List<String> searchBooks(String title, String author, String category);
 } 

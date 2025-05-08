@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Controller for handling book content related operations.
+ * Provides endpoints for retrieving book content for borrowed books.
+ */
 @RestController
 @RequestMapping("/api/books")
 public class BookContentController {
@@ -17,6 +21,13 @@ public class BookContentController {
     @Autowired
     private BorrowService borrowService;
 
+    /**
+     * Retrieves the content URL for a borrowed book.
+     * 
+     * @param request The request containing the book ID
+     * @return ResponseEntity containing the book content response with either the content URL
+     *         or an error message if the book hasn't been borrowed
+     */
     @PostMapping("/content")
     public ResponseEntity<BookContentResponse> getBookContent(@RequestBody BookContentRequest request) {
         //get user uuid from token
